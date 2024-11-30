@@ -1,36 +1,129 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# JS Playground
 
-## Getting Started
+A modern, feature-rich JavaScript playground built with Next.js and Monaco Editor. This project aims to provide a robust environment for testing, learning, and experimenting with JavaScript code.
 
-First, run the development server:
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![Next.js](https://img.shields.io/badge/Next.js-14.0-black)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)
+
+## 🚀 Features
+
+- **Monaco Editor Integration**: Professional code editing with syntax highlighting and autocompletion
+- **Real-time Code Execution**: Execute JavaScript code instantly
+- **Console Output**: Full console emulation (log, error, warn, info)
+- **Customizable Layout**: Switch between horizontal and vertical layouts
+- **Theme Support**: Light and dark themes available
+- **Persistent Storage**: Your code and settings are automatically saved
+- **TypeScript Support**: Full TypeScript type checking and IntelliSense
+
+## 🛠️ Tech Stack
+
+- [Next.js 14](https://nextjs.org/)
+- [TypeScript](https://www.typescriptlang.org/)
+- [Monaco Editor](https://microsoft.github.io/monaco-editor/)
+- [Zustand](https://github.com/pmndrs/zustand)
+- [Tailwind CSS](https://tailwindcss.com/)
+- [shadcn/ui](https://ui.shadcn.com/)
+
+## 📦 Installation
+
+- Clone the repository:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/linder3hs/js-playground.git
+cd js-playground
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- Install dependencies:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+yarn install
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- Run the development server:
 
-## Learn More
+```bash
+yarn dev
+```
 
-To learn more about Next.js, take a look at the following resources:
+- Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 🤝 Contributing
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+We welcome contributions from the community! Here's how you can help:
 
-## Deploy on Vercel
+### Contributing Guidelines
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Code Style
+
+- Use TypeScript for type safety
+- Follow the existing coding style
+- Write clear commit messages
+- Add appropriate comments and documentation
+- Update tests when necessary
+
+### Project Structure
+
+```md
+js-playground/
+├── src/
+│   ├── app/                   # Next.js app directory
+│   ├── components/            # React components
+│   │   ├── editor/           # Editor-related components
+│   │   ├── console/          # Console output components
+│   │   ├── layout/           # Layout components
+│   │   └── ui/               # shadcn/ui components
+│   ├── hooks/                # Custom React hooks
+│   ├── lib/                  # Utilities and helpers
+│   │   ├── types/           # TypeScript types
+│   │   └── utils/           # Utility functions
+│   └── store/               # Zustand store
+└── public/                  # Static files
+```
+
+### Roadmap and Future Features
+
+- [ ] Multiple file support
+- [ ] NPM package integration
+- [ ] Custom themes
+- [ ] Sharing capabilities
+- [ ] Integrated terminal
+- [ ] File system integration
+- [ ] Project templates
+- [ ] Code formatting options
+
+## 🐛 Bug Reports and Feature Requests
+
+If you find a bug or would like to request a new feature, please create an issue on GitHub. When creating an issue, please include:
+
+- A clear and descriptive title
+- A detailed description of the bug or feature
+- Steps to reproduce (for bugs)
+- Expected behavior
+- Current behavior
+- Screenshots (if applicable)
+- Any relevant code snippets
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- [Monaco Editor](https://microsoft.github.io/monaco-editor/) team
+- [shadcn/ui](https://ui.shadcn.com/) components
+- All contributors who help improve this project
+
+## 📫 Contact
+
+Project Link: [https://github.com/linder3hs/js-playground](https://github.com/linder3hs/js-playground)
+
+---
+
+Made with ❤️ by contributors worldwide
