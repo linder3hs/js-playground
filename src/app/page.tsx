@@ -1,35 +1,29 @@
-"use client";
+import {
+  ComparisonSection,
+  FAQSection,
+  FeaturesSection,
+  Footer,
+  HeroSection,
+  Navbar,
+  PlaygroundGrid,
+} from "@/components";
+import { BackgroundEffects } from "@/components/ui/background-effects";
 
-import { useEffect } from "react";
-import { Header } from "@/components/layout/header";
-import { Workspace } from "@/components/layout/workspace";
-import { ThemeProvider } from "next-themes";
-import { Toaster } from "@/components/ui/toaster";
-
-export default function Home() {
-  // Prevenir la pérdida de cambios no guardados
-  useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      e.preventDefault();
-      e.returnValue = "";
-    };
-
-    window.addEventListener("beforeunload", handleBeforeUnload);
-
-    return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-    };
-  }, []);
-
+export default function LandingPage() {
   return (
-    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-      <main className={`min-h-screen bg-background flex flex-col`}>
-        <Header />
-        <div className="flex-1 overflow-hidden">
-          <Workspace />
+    <div className="min-h-screen bg-[#0E1525] text-white">
+      <Navbar />
+      <main>
+        <div className="container mx-auto px-6 pt-32">
+          <HeroSection />
+          <PlaygroundGrid />
         </div>
+        <FeaturesSection />
+        <ComparisonSection />
+        <FAQSection />
       </main>
-      <Toaster />
-    </ThemeProvider>
+      <Footer />
+      <BackgroundEffects />
+    </div>
   );
 }
