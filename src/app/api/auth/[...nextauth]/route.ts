@@ -1,5 +1,9 @@
-import NextAuth from "next-auth"
+import NextAuth, { DefaultSession, Session } from "next-auth"
 import GithubProvider from "next-auth/providers/github"
+
+interface CustomSession extends Session {
+  accessToken?: string
+}
 
 const handler = NextAuth({
   providers: [
@@ -21,10 +25,11 @@ const handler = NextAuth({
 
       return token
     },
-    async session({session, token}: {session: any, token: any}) {
-      session.accessToken = token.accessToken
-
-      return session
+    async session({ session, token }): Promise<CustomSession> {
+      return {
+        ...session,
+        accessToken: token.accessToken as string
+      }
     }
   },
   pages: {
