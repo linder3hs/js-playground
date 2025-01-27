@@ -1,10 +1,17 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { Layout, Settings } from "lucide-react";
 import { useEditorStore } from "@/store/editor-store";
 import { LayoutOrientation } from "@/lib/types";
+import { useSession } from "next-auth/react";
+import { UserProfile } from "../auth/user-profile";
+import { LoginButton } from "../auth/login-button";
 
 export const Header = () => {
   const { orientation, setOrientation } = useEditorStore();
+
+  const { data: session } = useSession()
 
   const toggleLayout = (): void => {
     const newOrientation: LayoutOrientation =
@@ -22,6 +29,9 @@ export const Header = () => {
         <Button variant="outline">
           <Settings size={16} />
         </Button>
+        <div className="flex items-center gap-4">
+          {session ? <UserProfile /> : <LoginButton />}
+        </div>
       </div>
     </header>
   );
