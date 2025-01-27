@@ -1,4 +1,4 @@
-import NextAuth, { DefaultSession, Session } from "next-auth"
+import NextAuth, { Session } from "next-auth"
 import GithubProvider from "next-auth/providers/github"
 
 interface CustomSession extends Session {
