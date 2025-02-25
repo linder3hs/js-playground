@@ -325,7 +325,7 @@ export function WebPlayground(): JSX.Element {
       id: "duplicate-line",
       label: "Duplicate Line",
       keybindings: [monaco.KeyMod.Alt | monaco.KeyCode.KeyD],
-      run: (ed: any) => {
+      run: (ed: MonacoEditor) => {
         ed.getAction("editor.action.copyLinesDownAction").run();
       },
     });
@@ -335,7 +335,7 @@ export function WebPlayground(): JSX.Element {
       id: "toggle-comment",
       label: "Toggle Comment",
       keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Slash],
-      run: (ed: any) => {
+      run: (ed: MonacoEditor) => {
         ed.getAction("editor.action.commentLine").run();
       },
     });
@@ -627,7 +627,10 @@ export function WebPlayground(): JSX.Element {
       // Agregar detector de patrones Emmet para HTML
       monaco.languages.registerCompletionItemProvider("html", {
         triggerCharacters: [":", ".", ">", "#", "*", "+", "["],
-        provideCompletionItems: (model: any, position: any) => {
+        provideCompletionItems: (
+          model: MonacoModel,
+          position: MonacoPosition
+        ) => {
           const lineContent = model.getLineContent(position.lineNumber);
           const wordUntilPosition = lineContent.substring(
             0,
