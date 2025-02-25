@@ -20,13 +20,12 @@ export function PlaygroundGrid() {
       link: "/playground/js-ts",
     },
     {
-      title: "Swift",
-      icon: <Code2 className="w-6 h-6 text-orange-400" />,
+      title: "Web Editor",
+      icon: <Code2 className="w-6 h-6 text-purple-400" />,
       description:
-        "Write and test Swift code with iOS and macOS frameworks support.",
-      gradient: "from-orange-500/20 to-red-500/20",
-      comingSoon: true,
-      link: "/playground/js-ts",
+        "Live HTML, CSS, and JavaScript editor with real-time preview.",
+      gradient: "from-purple-500/20 to-pink-500/20",
+      link: "/playground/web",
     },
   ];
 

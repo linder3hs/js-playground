@@ -48,3 +48,19 @@ export interface WorkspaceSettings {
 }
 
 export type ActivePanel = "editor" | "console" | "both";
+
+export type FileType = "html" | "css" | "javascript";
+
+export interface WebPlaygroundFile {
+  id: string;
+  type: FileType;
+  content: string;
+}
+
+export interface WebPlaygroundState {
+  files: {
+    html: WebPlaygroundFile;
+    css: WebPlaygroundFile;
+    javascript: WebPlaygroundFile;
+  };
+}
