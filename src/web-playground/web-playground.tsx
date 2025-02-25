@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+
 import {
   Editor,
   useMonaco,
   Monaco,
+  OnMount,
 } from "@monaco-editor/react";
 import { useWebPlaygroundStore } from "@/store/web-playground-store";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -40,9 +42,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-// Estilos para el menú contextual
-import "./MonacoContextMenu.css";
-
 // Definición de tipos
 interface FileContent {
   content: string;
@@ -68,6 +67,21 @@ interface LayoutConfig {
   previewSize: number;
 }
 
+interface MonacoModel {
+  getValueInRange: (range: {
+    startLineNumber: number;
+    startColumn: number;
+    endLineNumber: number;
+    endColumn: number;
+  }) => string;
+  getLineContent: (lineNumber: number) => string;
+}
+
+interface MonacoPosition {
+  lineNumber: number;
+  column: number;
+}
+
 interface EmmetSuggestion {
   trigger: string;
   snippet: string;
@@ -80,11 +94,9 @@ interface MenuItem {
   type?: string;
 }
 
-// Tipo para la función editorWillMount
 type EditorWillMountHandler = (monaco: Monaco) => void;
 
-// Tipo para la función handleEditorDidMount
-type EditorDidMountHandler = (editor: any, monaco: Monaco) => void;
+type MonacoEditor = Parameters<OnMount>[0];
 
 export function WebPlayground(): JSX.Element {
   // Acceso al store
@@ -94,8 +106,7 @@ export function WebPlayground(): JSX.Element {
   const previewRef = useRef<HTMLIFrameElement>(null);
   const [autoUpdate, setAutoUpdate] = useState<boolean>(true);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
-  const [editorTheme, setEditorTheme] = useState<string>("vs-dark");
-  const [editorFontSize, setEditorFontSize] = useState<number>(14);
+  const [editorFontSize] = useState<number>(14);
   const [previewLayout, setPreviewLayout] = useState<
     "split" | "bottom" | "right"
   >("right");
@@ -181,7 +192,7 @@ export function WebPlayground(): JSX.Element {
     );
   };
 
-  const handleEditorDidMount = (editor: any, monaco: Monaco): void => {
+  const handleEditorDidMount = (editor: MonacoEditor, monaco: Monaco): void => {
     // Crear menú contextual al estilo VS Code
     editor.onContextMenu((e: { event: { posx: number; posy: number } }) => {
       const containerDiv = document.createElement("div");
@@ -276,7 +287,7 @@ export function WebPlayground(): JSX.Element {
           menuItem.appendChild(labelSpan);
 
           menuItem.onclick = () => {
-            item.action && item.action();
+            if (item.action) item.action();
             document.body.removeChild(containerDiv);
           };
 
@@ -336,7 +347,10 @@ export function WebPlayground(): JSX.Element {
       // Simular comportamiento de Emmet en HTML
       monaco.languages.registerCompletionItemProvider("html", {
         triggerCharacters: [">"],
-        provideCompletionItems: (model: any, position: any) => {
+        provideCompletionItems: (
+          model: MonacoModel,
+          position: MonacoPosition
+        ) => {
           const textUntilPosition = model.getValueInRange({
             startLineNumber: position.lineNumber,
             startColumn: 1,
