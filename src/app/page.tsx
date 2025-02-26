@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { motion, useScroll } from "framer-motion";
-import Head from "next/head";
 import {
   Navbar,
   HeroSection,
