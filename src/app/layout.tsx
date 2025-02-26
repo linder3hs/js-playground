@@ -1,7 +1,7 @@
 import "./globals.css";
 import type { Metadata } from "next";
 import { Providers } from "./providers"
-import Head from "next/head";
+import Script from "next/script";
 
 export const metadata: Metadata = {
   title: "JS Playground - Interactive JavaScript & TypeScript Code Editor",
@@ -81,7 +81,7 @@ export default function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <Head>
+      <head>
         <title>
           JS Playground - Interactive JavaScript & TypeScript Code Editor
         </title>
@@ -157,14 +157,15 @@ export default function RootLayout({
         />
         <link rel="manifest" href="/site.webmanifest" />
 
-        {/* Structured data */}
-        <script
+       
+      </head>
+      <body>
+        <Providers>{children}</Providers>
+        <Script
+          id="json-ld"
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
-      </Head>
-      <body>
-        <Providers>{children}</Providers>
       </body>
     </html>
   );
