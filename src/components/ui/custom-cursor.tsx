@@ -1,13 +1,21 @@
-// src/components/ui/custom-cursor.tsx
 "use client";
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 
+// Definir interfaz para la posición del ratón
+interface MousePosition {
+  x: number;
+  y: number;
+}
+
 export function CustomCursor() {
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const [isHovering, setIsHovering] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  const [mousePosition, setMousePosition] = useState<MousePosition>({
+    x: 0,
+    y: 0,
+  });
+  const [isHovering, setIsHovering] = useState<boolean>(false);
+  const [isMobile, setIsMobile] = useState<boolean>(false);
 
   useEffect(() => {
     // Detect if the device is mobile/tablet
@@ -18,8 +26,8 @@ export function CustomCursor() {
     checkDevice();
     window.addEventListener("resize", checkDevice);
 
-    // Track mouse position
-    const mouseMove = (e: any) => {
+    // Track mouse position - tipado correctamente
+    const mouseMove = (e: MouseEvent) => {
       setMousePosition({
         x: e.clientX,
         y: e.clientY,
@@ -30,7 +38,8 @@ export function CustomCursor() {
     const handleMouseEnter = () => setIsHovering(true);
     const handleMouseLeave = () => setIsHovering(false);
 
-    const interactiveElements = document.querySelectorAll(
+    // Utilizar el tipo correcto para los elementos seleccionados
+    const interactiveElements = document.querySelectorAll<HTMLElement>(
       'a, button, [role="button"], input, select, textarea'
     );
 

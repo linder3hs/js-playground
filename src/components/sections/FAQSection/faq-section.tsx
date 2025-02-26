@@ -1,11 +1,30 @@
-// src/components/FAQSection.tsx
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import { ChevronDown, MessageCircle } from "lucide-react";
 
-const FAQItem = ({ question, answer, isOpen, toggleOpen, index }: any) => {
+// Definir interfaces para las props y datos
+interface FAQItemProps {
+  question: string;
+  answer: string;
+  isOpen: boolean;
+  toggleOpen: () => void;
+  index: number;
+}
+
+interface FAQData {
+  question: string;
+  answer: string;
+}
+
+const FAQItem = ({
+  question,
+  answer,
+  isOpen,
+  toggleOpen,
+  index,
+}: FAQItemProps) => {
   return (
     <motion.div
       className={`border-b border-gray-200 dark:border-gray-800 last:border-0 ${
@@ -47,9 +66,9 @@ const FAQItem = ({ question, answer, isOpen, toggleOpen, index }: any) => {
 };
 
 export function FAQSection() {
-  const [openIndex, setOpenIndex] = useState(0);
+  const [openIndex, setOpenIndex] = useState<number>(0);
 
-  const faqs = [
+  const faqs: FAQData[] = [
     {
       question: "Is it really free?",
       answer:
@@ -63,7 +82,7 @@ export function FAQSection() {
     {
       question: "How do I share my playground?",
       answer:
-        "Sharing is simple! Just click the 'Share' button in the top menu bar of any playground to generate a unique URL. You can send this link to anyone, and they'll be able to see and run your exact code. You can also set permissions to allow others to edit your code for collaborative work.",
+        "Sharing is simple! Just click the &apos;Share&apos; button in the top menu bar of any playground to generate a unique URL. You can send this link to anyone, and they&apos;ll be able to see and run your exact code. You can also set permissions to allow others to edit your code for collaborative work.",
     },
     {
       question: "What about data privacy?",
@@ -83,7 +102,7 @@ export function FAQSection() {
     {
       question: "How do I contribute to the project?",
       answer:
-        "We welcome contributions! JS Playground is open source and hosted on GitHub. You can contribute by submitting pull requests, reporting bugs, suggesting features, or improving documentation. Check out our GitHub repository and the 'Contributing' guide to get started.",
+        "We welcome contributions! JS Playground is open source and hosted on GitHub. You can contribute by submitting pull requests, reporting bugs, suggesting features, or improving documentation. Check out our GitHub repository and the &apos;Contributing&apos; guide to get started.",
     },
     {
       question: "Is there a limit to project size or complexity?",
@@ -148,8 +167,8 @@ export function FAQSection() {
                 Still have questions?
               </h3>
               <p className="text-gray-300 mb-4">
-                Can't find the answer you're looking for? Please reach out to
-                our friendly team.
+                Can&apos;t find the answer you&apos;re looking for? Please reach
+                out to our friendly team.
               </p>
               <motion.a
                 href="/contact"

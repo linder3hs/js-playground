@@ -5,7 +5,6 @@ import { ArrowRight, Code, Monitor, TerminalSquare } from "lucide-react";
 import { useTheme } from "next-themes";
 
 export function HeroSection() {
-  const { theme } = useTheme();
 
   // Animation variants
   const containerVariants = {

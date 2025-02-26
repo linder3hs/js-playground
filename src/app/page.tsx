@@ -5,8 +5,6 @@ import { useEffect, useState, useRef } from "react";
 import {
   motion,
   useScroll,
-  useTransform,
-  AnimatePresence,
 } from "framer-motion";
 import {
   Navbar,
@@ -26,7 +24,6 @@ import { ThemeProvider } from "@/components/theme/theme-provider";
 export default function LandingPage() {
   const [mounted, setMounted] = useState(false);
   const { scrollYProgress } = useScroll();
-  const ref = useRef(null);
 
   // Animation for sections to fade in when scrolled into view
   const fadeInVariants = {

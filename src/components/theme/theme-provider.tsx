@@ -3,11 +3,20 @@
 import { ThemeProvider as NextThemesProvider } from "next-themes";
 import { ReactNode } from "react";
 
-// Define a more flexible props interface
-type ThemeProviderProps = {
+// Opciones válidas para attribute según la documentación
+type Attribute = "class" | "data-theme" | "data-mode";
+
+// Define propiedades específicas con tipos concretos
+interface ThemeProviderProps {
   children: ReactNode;
-  [key: string]: any;
-};
+  attribute?: Attribute | Attribute[] | undefined;
+  defaultTheme?: string | undefined;
+  enableSystem?: boolean | undefined;
+  disableTransitionOnChange?: boolean | undefined;
+  forcedTheme?: string | undefined;
+  themes?: string[] | undefined;
+  storageKey?: string | undefined;
+}
 
 export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
   return <NextThemesProvider {...props}>{children}</NextThemesProvider>;

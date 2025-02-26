@@ -21,7 +21,6 @@ interface AnimateMobileMenuProps {
 export function Navbar() {
   const [isScrolled, setIsScrolled] = useState<boolean>(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
-  const { theme } = useTheme();
   const { scrollY } = useScroll();
 
   // Transform opacity based on scroll position
