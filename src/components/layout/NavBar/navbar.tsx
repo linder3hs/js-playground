@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { motion, useScroll, useTransform, MotionValue } from "framer-motion";
 import { Command, Github, Menu, X } from "lucide-react";
-import { useTheme } from "next-themes";
 import Link from "next/link";
 
 // Interface for navigation links

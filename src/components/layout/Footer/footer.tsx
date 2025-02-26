@@ -16,7 +16,7 @@ export function Footer() {
   const [email, setEmail] = useState("");
   const [isSubscribed, setIsSubscribed] = useState(false);
 
-  const handleSubscribe = (e: any) => {
+  const handleSubscribe = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (email) {
       // In a real app, you would handle the subscription logic here

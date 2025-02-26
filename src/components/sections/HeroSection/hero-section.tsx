@@ -2,7 +2,6 @@
 
 import { motion } from "framer-motion";
 import { ArrowRight, Code, Monitor, TerminalSquare } from "lucide-react";
-import { useTheme } from "next-themes";
 
 export function HeroSection() {
 
