@@ -1,0 +1,26 @@
+# robots.txt file for JS Playground
+# https://js-playground-alpha.vercel.app/
+
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://js-playground-alpha.vercel.app/sitemap.xml
+
+# Discourage crawling of admin/backend areas
+User-agent: *
+Disallow: /api/
+Disallow: /admin/
+Disallow: /_next/
+
+# Allow Google images to index images
+User-agent: Googlebot-Image
+Allow: /public/images/
+Allow: /images/
+
+# Block specific crawlers if needed
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
