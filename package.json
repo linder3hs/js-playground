@@ -22,6 +22,7 @@
     "@vercel/analytics": "^1.4.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "flatrepo": "^1.0.10",
     "js-base64": "^3.7.7",
     "lucide-react": "^0.476.0",
     "motion": "^12.4.7",
