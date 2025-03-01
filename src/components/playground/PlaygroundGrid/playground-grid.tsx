@@ -47,6 +47,15 @@ export function PlaygroundGrid() {
       tags: ["HTML", "CSS", "Live Preview"],
     },
     {
+      title: "Markdown Editor",
+      icon: <Code2 className="w-6 h-6 text-green-500" />,
+      description:
+        "Write and preview Markdown documents with live rendering and syntax highlighting.",
+      gradient: "from-purple-500/20 to-pink-500/20",
+      link: "/playground/markdown",
+      tags: ["Markdown", "Syntax", "Preview"],
+    },
+    {
       title: "React Editor",
       icon: <Braces className="w-6 h-6 text-cyan-500" />,
       description:
@@ -64,16 +73,6 @@ export function PlaygroundGrid() {
       gradient: "from-orange-500/20 to-red-500/20",
       link: "/playground/swift",
       tags: ["iOS", "macOS", "Swift"],
-      comingSoon: true, // Marcado como Coming Soon
-    },
-    {
-      title: "API Tester",
-      icon: <Tag className="w-6 h-6 text-green-500" />,
-      description:
-        "Test API endpoints with a simple interface for crafting requests and viewing responses.",
-      gradient: "from-green-500/20 to-emerald-500/20",
-      link: "/playground/api",
-      tags: ["REST", "JSON", "Fetch"],
       comingSoon: true, // Marcado como Coming Soon
     },
   ];

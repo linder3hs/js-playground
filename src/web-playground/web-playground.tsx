@@ -160,7 +160,6 @@ export function WebPlayground(): JSX.Element {
         </div>
       </div>
 
-      {/* Paneles redimensionables */}
       <ResizablePanelGroup direction={config.direction}>
         <ResizablePanel defaultSize={config.editorSize}>
           <Tabs defaultValue="html" className="h-full flex flex-col">
