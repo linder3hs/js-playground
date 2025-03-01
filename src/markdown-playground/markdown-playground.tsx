@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Monaco } from "@monaco-editor/react";
+import { MonacoEditor } from "@/web-playground/types";
 
 // Extend Window interface to include Monaco
 declare global {
@@ -37,7 +38,7 @@ declare global {
 export function MarkdownPlayground() {
   const { toast } = useToast();
   const [markdown, setMarkdown] = useState<string>(`# Markdown Editor
-  
+
 ## Welcome to JS Playground Markdown Editor
 
 This is a simple markdown editor with live preview. You can:
@@ -249,7 +250,7 @@ This is a simple markdown editor with live preview. You can:
 
 
   // Force the theme to be applied correctly on mount
-  const handleEditorDidMount = (editor: any, monaco: Monaco) => {
+  const handleEditorDidMount = (editor: MonacoEditor, monaco: Monaco) => {
     monaco.editor.setTheme("vs-dark-custom");
 
     // Force redraw the editor to apply theme correctly
