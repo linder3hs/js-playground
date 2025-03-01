@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Terminal, Command, Code2, Laptop, Braces, Tag } from "lucide-react";
+import { Terminal, Command, Code2, Laptop, Braces } from "lucide-react";
 import { ReactNode } from "react";
 import { PlaygroundCard } from "../PlaygroundCard";
 

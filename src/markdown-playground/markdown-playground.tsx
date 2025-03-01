@@ -30,7 +30,7 @@ import { Monaco } from "@monaco-editor/react";
 // Extend Window interface to include Monaco
 declare global {
   interface Window {
-    monaco?: any;
+    monaco?: Monaco;
   }
 }
 
