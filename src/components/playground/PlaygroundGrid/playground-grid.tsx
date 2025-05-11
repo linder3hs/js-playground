@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Terminal, Command, Code2, Laptop, Braces } from "lucide-react";
+import { Terminal, Command, Code2, Laptop, Braces, FileJson } from "lucide-react";
 import { ReactNode } from "react";
 import { PlaygroundCard } from "../PlaygroundCard";
 
@@ -13,7 +13,7 @@ interface PlaygroundData {
   gradient: string;
   link: string;
   tags: string[];
-  comingSoon?: boolean; // Nueva propiedad para indicar elementos no disponibles
+  comingSoon?: boolean;
 }
 
 export function PlaygroundGrid() {
@@ -56,6 +56,15 @@ export function PlaygroundGrid() {
       tags: ["Markdown", "Syntax", "Preview"],
     },
     {
+      title: "JSON Formatter",
+      icon: <FileJson className="w-6 h-6 text-amber-500" />,
+      description:
+        "Format, validate and visualize JSON data with a tree view for easy exploration.",
+      gradient: "from-amber-500/20 to-orange-500/20",
+      link: "/playground/json",
+      tags: ["Formatter", "Validator", "Tree View"],
+    },
+    {
       title: "React Editor",
       icon: <Braces className="w-6 h-6 text-cyan-500" />,
       description:
@@ -63,7 +72,7 @@ export function PlaygroundGrid() {
       gradient: "from-cyan-500/20 to-blue-400/20",
       link: "/playground/react",
       tags: ["JSX", "Components", "Hooks"],
-      comingSoon: true, // Marcado como Coming Soon
+      comingSoon: true,
     },
     {
       title: "Swift Playground",
@@ -73,11 +82,10 @@ export function PlaygroundGrid() {
       gradient: "from-orange-500/20 to-red-500/20",
       link: "/playground/swift",
       tags: ["iOS", "macOS", "Swift"],
-      comingSoon: true, // Marcado como Coming Soon
+      comingSoon: true,
     },
   ];
 
-  // Container animation for staggered children
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {

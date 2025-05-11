@@ -47,11 +47,11 @@ export function Navbar() {
   };
 
   const navLinks: NavLink[] = [
-    { name: "Home", href: "/" },
-    { name: "JavaScript", href: "/playground/js-ts" },
-    { name: "TypeScript", href: "/playground/js-ts" },
+    { name: "JS / TS Editor", href: "/playground/js-ts" },
     { name: "Web Editor", href: "/playground/web" },
-    { name: "Docs", href: "/docs" },
+    { name: "MD Editor", href: "/playground/markdown" },
+    { name: "JSON Viewer", href: "/playground/json" },
+    // { name: "Docs", href: "/docs" },
   ];
 
   useEffect(() => {
