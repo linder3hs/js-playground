@@ -19,12 +19,11 @@ export type ConsoleValue =
   | RegExp
   | Error
   | Promise<unknown>
-  | Map<unknown, unknown>
+  | Map<string | number | symbol, unknown>
   | Set<unknown>
-  | Array<unknown>
+  | readonly unknown[]
   | Record<string, unknown>
-  | object
-  | unknown;
+  | object;
 
 // Marcador para WeakMap global - lo recrearemos para cada invocación
 let circularReferences: WeakMap<object, string>;
@@ -100,11 +99,16 @@ export function formatValuePreview(
     case "bigint":
       return `${(value as bigint).toString()}n`;
     case "function":
-      const funcStr = (value as Function).toString();
-      const firstLine = funcStr.split("\n")[0];
-      return firstLine.length > 60
-        ? `${firstLine.substring(0, 57)}...`
-        : firstLine;
+      // Usar tipo específico de función y comprobación de tipo
+      if (typeof value === "function") {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+        const funcStr = value.toString();
+        const firstLine = funcStr.split("\n")[0];
+        return firstLine.length > 60
+          ? `${firstLine.substring(0, 57)}...`
+          : firstLine;
+      }
+      return "[Function]";
     case "date":
       return (value as Date).toISOString();
     case "regexp":
@@ -115,9 +119,9 @@ export function formatValuePreview(
     case "promise":
       return "[Promise]";
     case "array":
-      return `Array(${(value as unknown[]).length})`;
+      return `Array(${(value as readonly unknown[]).length})`;
     case "map":
-      return `Map(${(value as Map<unknown, unknown>).size})`;
+      return `Map(${(value as Map<string | number | symbol, unknown>).size})`;
     case "set":
       return `Set(${(value as Set<unknown>).size})`;
     case "object":
@@ -140,7 +144,7 @@ export function formatValuePreview(
 export function hasChildren(value: ConsoleValue, type: ValueType): boolean {
   switch (type) {
     case "array":
-      return Array.isArray(value) && (value as unknown[]).length > 0;
+      return Array.isArray(value) && (value as readonly unknown[]).length > 0;
     case "object":
       return (
         value !== null &&
@@ -148,7 +152,10 @@ export function hasChildren(value: ConsoleValue, type: ValueType): boolean {
         Object.keys(value as object).length > 0
       );
     case "map":
-      return value instanceof Map && (value as Map<unknown, unknown>).size > 0;
+      return (
+        value instanceof Map &&
+        (value as Map<string | number | symbol, unknown>).size > 0
+      );
     case "set":
       return value instanceof Set && (value as Set<unknown>).size > 0;
     case "error":
@@ -168,13 +175,15 @@ export function hasChildren(value: ConsoleValue, type: ValueType): boolean {
 export function countChildren(value: ConsoleValue, type: ValueType): number {
   switch (type) {
     case "array":
-      return Array.isArray(value) ? (value as unknown[]).length : 0;
+      return Array.isArray(value) ? (value as readonly unknown[]).length : 0;
     case "object":
       return value !== null && typeof value === "object"
         ? Object.keys(value as object).length
         : 0;
     case "map":
-      return value instanceof Map ? (value as Map<unknown, unknown>).size : 0;
+      return value instanceof Map
+        ? (value as Map<string | number | symbol, unknown>).size
+        : 0;
     case "set":
       return value instanceof Set ? (value as Set<unknown>).size : 0;
     case "error":
@@ -234,9 +243,10 @@ export function processValue(
   const isExpanded = depth < initialExpandLevel && valueHasChildren;
 
   // Construir objeto de valor procesado
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const processedValue: ProcessedValue = {
     type,
-    value: valueHasChildren && depth >= maxDepth ? undefined : value,
+    value: valueHasChildren && depth >= maxDepth ? undefined : value, // Necesitamos permitir any aquí
     preview,
     hasChildren: valueHasChildren,
     depth,
@@ -280,14 +290,15 @@ export function processChildren(
       // Para arrays, limitar el número de elementos si es muy grande
       if (!Array.isArray(parentValue)) return children;
 
+      const arrayValue = parentValue as readonly unknown[];
       const maxArrayDisplay = options.maxArrayChildrenDisplay || 100;
-      const arrayLength = parentValue.length;
+      const arrayLength = arrayValue.length;
       const displayItems = Math.min(arrayLength, maxArrayDisplay);
 
       for (let i = 0; i < displayItems; i++) {
         const childPath = `${parentPath}[${i}]`;
         const child = processValue(
-          parentValue[i],
+          arrayValue[i] as ConsoleValue,
           childPath,
           depth + 1,
           i,
@@ -321,8 +332,10 @@ export function processChildren(
       for (let i = 0; i < displayProps; i++) {
         const key = keys[i];
         const childPath = `${parentPath}.${key}`;
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        const childValue = objValue[key];
         const child = processValue(
-          objValue[key],
+          childValue as ConsoleValue,
           childPath,
           depth + 1,
           key,
@@ -347,7 +360,7 @@ export function processChildren(
       // Para Maps, convertir a entradas
       if (!(parentValue instanceof Map)) return children;
 
-      const mapValue = parentValue as Map<unknown, unknown>;
+      const mapValue = parentValue as Map<string | number | symbol, unknown>;
       const mapEntries = Array.from(mapValue.entries()) as MapEntry[];
       const maxMapEntries = options.maxObjectPropertiesDisplay || 100;
       const displayEntries = Math.min(mapEntries.length, maxMapEntries);
@@ -357,7 +370,7 @@ export function processChildren(
         // Procesar la clave
         const keyPath = `${parentPath}.key[${i}]`;
         const keyValue = processValue(
-          mapKey,
+          mapKey as ConsoleValue,
           keyPath,
           depth + 1,
           `key ${i}`,
@@ -367,7 +380,7 @@ export function processChildren(
         // Procesar el valor
         const valPath = `${parentPath}.val[${i}]`;
         const valValue = processValue(
-          mapVal,
+          mapVal as ConsoleValue,
           valPath,
           depth + 1,
           `value ${i}`,
@@ -400,7 +413,7 @@ export function processChildren(
       for (let i = 0; i < displayValues; i++) {
         const childPath = `${parentPath}[${i}]`;
         const child = processValue(
-          setValues[i],
+          setValues[i as number] as ConsoleValue,
           childPath,
           depth + 1,
           i,
@@ -435,9 +448,10 @@ export function processChildren(
         if (key !== "stack") {
           // El stack ya lo hemos añadido
           const childPath = `${parentPath}.${key}`;
-          const childValue = errorValue[key as keyof Error];
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+          const childValue = errorValue[key as keyof Error] as ConsoleValue;
           const child = processValue(
-            childValue as ConsoleValue,
+            childValue,
             childPath,
             depth + 1,
             key,
