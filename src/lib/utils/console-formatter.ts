@@ -3,6 +3,7 @@ import {
   ValueType,
   ConsoleFormatterOptions,
 } from "@/components/console/types";
+import { ConsoleFunction } from "@/hooks/use-editor";
 
 // Definir un tipo para cualquier valor que pueda manejar la consola
 export type ConsoleValue =
@@ -13,7 +14,7 @@ export type ConsoleValue =
   | symbol
   | null
   | undefined
-  | Function
+  | ConsoleFunction
   | Date
   | RegExp
   | Error

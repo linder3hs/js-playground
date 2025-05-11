@@ -6,7 +6,8 @@ import { ConsoleOutputType } from "@/components/console/types";
 import { Monaco } from "@monaco-editor/react";
 import { MonacoEditor } from "@/web-playground/types";
 
-// Define un tipo para valores que pueden manejarse en la consola
+export type ConsoleFunction = (...args: unknown[]) => unknown;
+
 export type ConsoleValue =
   | string
   | number
@@ -15,7 +16,7 @@ export type ConsoleValue =
   | symbol
   | null
   | undefined
-  | Function
+  | ConsoleFunction
   | Date
   | RegExp
   | Error
@@ -44,7 +45,6 @@ export function useEditor() {
   const [monacoEditor, setMonacoEditor] = useState<MonacoEditor | null>(null);
   const [monacoInstance, setMonacoInstance] = useState<Monaco | null>(null);
 
-  // Usar el nuevo hook de consola
   const {
     consoleState,
     filteredOutputs,
@@ -59,7 +59,6 @@ export function useEditor() {
     collapseAllInOutput,
   } = useConsole({ initiallyOpen: true });
 
-  // Ejecutar código con la nueva consola
   const runCode = useCallback(async () => {
     const code = files[currentFile];
     if (!code.trim()) return;
@@ -86,13 +85,11 @@ export function useEditor() {
     }
   }, [files, currentFile, addOutput, clearConsole, setExecutingCode]);
 
-  // Configurar el editor de Monaco
   const handleEditorDidMount = useCallback(
     (editor: MonacoEditor, monaco: Monaco) => {
       setMonacoEditor(editor);
       setMonacoInstance(monaco);
 
-      // Configurar el tema y opciones
       monaco.editor.defineTheme("js-playground", {
         base: "vs-dark",
         inherit: true,
