@@ -1,6 +1,33 @@
 import { ConsoleOutputType } from "@/components/console/types";
+import { ConsoleFunction } from "@/hooks/use-editor";
 
-type LogArgument = any;
+// Define un tipo para valores que pueden ser utilizados en la consola
+type LogArgument =
+  | string
+  | number
+  | boolean
+  | bigint
+  | symbol
+  | null
+  | undefined
+  | ConsoleFunction
+  | Date
+  | RegExp
+  | Error
+  | Promise<unknown>
+  | Map<string | number | symbol, unknown>
+  | Set<unknown>
+  | readonly unknown[]
+  | Record<string, unknown>
+  | object;
+
+// Tipo para resultados del código ejecutado
+type ExecutionResult = {
+  error?: boolean;
+  message?: string;
+  stack?: string;
+  [key: string]: unknown;
+};
 
 interface CustomConsole {
   log: (...args: LogArgument[]) => void;
@@ -60,7 +87,7 @@ export const executeCode = async (
     args: LogArgument[],
     stack?: string
   ) => void
-): Promise<any> => {
+): Promise<unknown> => {
   // Crear el entorno seguro para ejecutar el código
   try {
     // Crear objeto console personalizado
@@ -83,7 +110,7 @@ export const executeCode = async (
           info: customConsole.info,
           debug: customConsole.debug
         };
-        
+
         try {
           ${code}
         } catch (error) {
@@ -98,17 +125,28 @@ export const executeCode = async (
     `;
 
     // Crear una función segura que ejecute el código
-    const secureFunction = new Function("customConsole", secureCode);
+    // eslint-disable-next-line @typescript-eslint/no-implied-eval
+    const secureFunction = new Function("customConsole", secureCode) as (
+      customConsole: CustomConsole
+    ) => Promise<ExecutionResult | unknown>;
 
     // Ejecutar y capturar el resultado
     const result = await secureFunction(customConsole);
 
     // Comprobar si el resultado es un error
-    if (result && typeof result === "object" && result.error === true) {
-      throw new Error(result.message || "Error en la ejecución del código");
+    if (
+      result !== null &&
+      typeof result === "object" &&
+      Object.prototype.hasOwnProperty.call(result, "error") &&
+      (result as ExecutionResult).error === true
+    ) {
+      const errorResult = result as ExecutionResult;
+      throw new Error(
+        errorResult.message || "Error en la ejecución del código"
+      );
     }
 
-    // Devolver el resultado (podría ser undefined)
+    // Devolver el resultado
     return result;
   } catch (error) {
     // Error durante la ejecución
