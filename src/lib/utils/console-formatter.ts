@@ -1,43 +1,25 @@
-import {
+import type {
   ProcessedValue,
   ValueType,
   ConsoleFormatterOptions,
 } from "@/components/console/types";
-import { ConsoleFunction } from "@/hooks/use-editor";
 
-// Definir un tipo para cualquier valor que pueda manejar la consola
 export type ConsoleValue =
   | string
   | number
   | boolean
-  | bigint
-  | symbol
   | null
   | undefined
-  | ConsoleFunction
-  | Date
-  | RegExp
-  | Error
-  | Promise<unknown>
-  | Map<string | number | symbol, unknown>
-  | Set<unknown>
-  | readonly unknown[]
-  | Record<string, unknown>
+  | symbol
+  | bigint
   | object;
 
-// Marcador para WeakMap global - lo recrearemos para cada invocación
 let circularReferences: WeakMap<object, string>;
 
-/**
- * Genera un ID único para valores en la consola
- */
 let valueIdCounter = 0;
 const getNextValueId = () => `val_${valueIdCounter++}`;
 
-/**
- * Detecta el tipo de un valor JavaScript
- */
-export function detectValueType(value: ConsoleValue): ValueType {
+export function detectValueType(value: unknown): ValueType {
   if (value === null) return "null";
   if (value === undefined) return "undefined";
 
@@ -70,10 +52,7 @@ export function detectValueType(value: ConsoleValue): ValueType {
 /**
  * Formatea un valor para mostrar una vista previa
  */
-export function formatValuePreview(
-  value: ConsoleValue,
-  type: ValueType
-): string {
+export function formatValuePreview(value: unknown, type: ValueType): string {
   switch (type) {
     case "string":
       const strValue = value as string;
@@ -141,7 +120,7 @@ export function formatValuePreview(
 /**
  * Verifica si un valor tiene hijos (propiedades expandibles)
  */
-export function hasChildren(value: ConsoleValue, type: ValueType): boolean {
+export function hasChildren(value: unknown, type: ValueType): boolean {
   switch (type) {
     case "array":
       return Array.isArray(value) && (value as readonly unknown[]).length > 0;
@@ -170,9 +149,9 @@ export function hasChildren(value: ConsoleValue, type: ValueType): boolean {
 }
 
 /**
- * Cuenta el número de hijos de un valor
+ * Cuenta el n��mero de hijos de un valor
  */
-export function countChildren(value: ConsoleValue, type: ValueType): number {
+export function countChildren(value: unknown, type: ValueType): number {
   switch (type) {
     case "array":
       return Array.isArray(value) ? (value as readonly unknown[]).length : 0;
@@ -200,9 +179,9 @@ export function countChildren(value: ConsoleValue, type: ValueType): number {
  * Procesa objetos anidados para la visualización en consola
  */
 export function processValue(
-  value: ConsoleValue,
-  path: string = "root",
-  depth: number = 0,
+  value: unknown,
+  path = "root",
+  depth = 0,
   key?: string | number,
   options: ConsoleFormatterOptions = {}
 ): ProcessedValue {
@@ -273,7 +252,7 @@ type MapEntry = [unknown, unknown];
  * Procesa un valor complejo para obtener sus hijos
  */
 export function processChildren(
-  parentValue: ConsoleValue,
+  parentValue: unknown,
   parentType: ValueType,
   parentPath: string,
   depth: number,
@@ -298,7 +277,7 @@ export function processChildren(
       for (let i = 0; i < displayItems; i++) {
         const childPath = `${parentPath}[${i}]`;
         const child = processValue(
-          arrayValue[i] as ConsoleValue,
+          arrayValue[i],
           childPath,
           depth + 1,
           i,
@@ -335,7 +314,7 @@ export function processChildren(
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         const childValue = objValue[key];
         const child = processValue(
-          childValue as ConsoleValue,
+          childValue,
           childPath,
           depth + 1,
           key,
@@ -370,7 +349,7 @@ export function processChildren(
         // Procesar la clave
         const keyPath = `${parentPath}.key[${i}]`;
         const keyValue = processValue(
-          mapKey as ConsoleValue,
+          mapKey,
           keyPath,
           depth + 1,
           `key ${i}`,
@@ -380,7 +359,7 @@ export function processChildren(
         // Procesar el valor
         const valPath = `${parentPath}.val[${i}]`;
         const valValue = processValue(
-          mapVal as ConsoleValue,
+          mapVal,
           valPath,
           depth + 1,
           `value ${i}`,
@@ -413,7 +392,7 @@ export function processChildren(
       for (let i = 0; i < displayValues; i++) {
         const childPath = `${parentPath}[${i}]`;
         const child = processValue(
-          setValues[i as number] as ConsoleValue,
+          setValues[i],
           childPath,
           depth + 1,
           i,
@@ -449,7 +428,7 @@ export function processChildren(
           // El stack ya lo hemos añadido
           const childPath = `${parentPath}.${key}`;
           // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-          const childValue = errorValue[key as keyof Error] as ConsoleValue;
+          const childValue = errorValue[key as keyof Error];
           const child = processValue(
             childValue,
             childPath,
@@ -470,7 +449,7 @@ export function processChildren(
  * Procesa múltiples valores para console.log
  */
 export function processConsoleValues(
-  values: ConsoleValue[],
+  values: unknown[],
   options: ConsoleFormatterOptions = {}
 ): ProcessedValue[] {
   // En vez de intentar limpiar, crear un nuevo WeakMap para cada invocación

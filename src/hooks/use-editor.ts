@@ -70,7 +70,7 @@ export function useEditor() {
     try {
       await executeCode(
         code,
-        (type: ConsoleOutputType, args: ConsoleValue[], stack?: string) => {
+        (type: ConsoleOutputType, args: any[], stack?: string) => {
           addOutput(type, args, stack);
         }
       );

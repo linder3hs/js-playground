@@ -16,17 +16,16 @@ export type ConsoleValue =
   | symbol
   | null
   | undefined
-  | Function
+  | ((...args: unknown[]) => unknown)
   | Date
   | RegExp
   | Error
   | Promise<unknown>
   | Map<unknown, unknown>
   | Set<unknown>
-  | Array<unknown>
+  | unknown[]
   | Record<string, unknown>
-  | object
-  | unknown;
+  | object;
 
 // Generar ID único para mensajes de consola
 const generateId = (): string =>
@@ -84,7 +83,8 @@ export function useConsole(options: UseConsoleOptions = {}) {
           // Procesar valores para que sean renderizables
           let processedValues: ProcessedValue[];
           try {
-            processedValues = processConsoleValues(safeArgs, {
+            // Usamos type assertion para resolver la incompatibilidad de tipos
+            processedValues = processConsoleValues(safeArgs as never[], {
               maxDepth: 5,
               initialExpandLevel: 1,
               maxArrayChildrenDisplay: 100,
