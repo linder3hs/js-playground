@@ -1,0 +1,157 @@
+/* Estilos para la consola */
+.console-container {
+  font-family: 'JetBrains Mono', 'Menlo', 'Monaco', 'Courier New', monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  background-color: #1E1E1E;
+  color: #D4D4D4;
+}
+
+.console-value {
+  transition: background-color 0.1s ease;
+}
+
+.console-value:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Diferentes tipos de valores */
+.console-string {
+  color: #CE9178;
+}
+
+.console-number {
+  color: #B5CEA8;
+}
+
+.console-boolean {
+  color: #569CD6;
+}
+
+.console-null,
+.console-undefined {
+  color: #CF6679;
+}
+
+.console-function {
+  color: #DCDCAA;
+}
+
+.console-array,
+.console-object {
+  color: #9CDCFE;
+}
+
+.console-date {
+  color: #D7BA7D;
+}
+
+.console-regexp {
+  color: #D16969;
+}
+
+.console-error {
+  color: #F44747;
+}
+
+/* Mensajes de consola */
+.console-log {
+  border-left: 2px solid #4CAF50;
+}
+
+.console-warn {
+  border-left: 2px solid #FFD700;
+  background-color: rgba(255, 215, 0, 0.05);
+}
+
+.console-error {
+  border-left: 2px solid #F44336;
+  background-color: rgba(244, 67, 54, 0.05);
+}
+
+.console-info {
+  border-left: 2px solid #2196F3;
+  background-color: rgba(33, 150, 243, 0.05);
+}
+
+.console-debug {
+  border-left: 2px solid #9C27B0;
+  background-color: rgba(156, 39, 176, 0.05);
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.console-output-new {
+  animation: fadeIn 0.3s ease forwards;
+}
+
+/* Scrollbar personalizado */
+.console-container::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.console-container::-webkit-scrollbar-track {
+  background: #2D2D2D;
+}
+
+.console-container::-webkit-scrollbar-thumb {
+  background: #3E3E3E;
+  border-radius: 4px;
+}
+
+.console-container::-webkit-scrollbar-thumb:hover {
+  background: #505050;
+}
+
+/* Stack trace */
+.console-stack {
+  font-size: 11px;
+  color: #9CDCFE;
+  white-space: pre-wrap;
+  overflow-x: auto;
+  padding: 8px;
+  background-color: rgba(244, 67, 54, 0.1);
+  border-radius: 4px;
+  margin-top: 4px;
+  margin-bottom: 4px;
+}
+
+/* Botones expandir/colapsar */
+.console-expand-button,
+.console-collapse-button {
+  color: #6C7A89;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0px 4px;
+  font-size: 9px;
+  transition: color 0.2s ease;
+}
+
+.console-expand-button:hover,
+.console-collapse-button:hover {
+  color: #A9B7C7;
+}
+
+/* Destacar propiedades */
+.console-property {
+  color: #9CDCFE;
+  font-weight: normal;
+}
+
+/* No-wrap para elementos inline */
+.console-inline {
+  white-space: nowrap;
+}

@@ -1,20 +1,13 @@
-import { ConsoleOutput } from "@/lib/types";
+import { ConsoleOutputType } from "@/components/console/types";
 
-type LogArgument =
-  | string
-  | number
-  | boolean
-  | null
-  | undefined
-  | object
-  | bigint;
-type ConsoleMethod = "log" | "error" | "warn" | "info";
+type LogArgument = any;
 
 interface CustomConsole {
   log: (...args: LogArgument[]) => void;
   error: (...args: LogArgument[]) => void;
   warn: (...args: LogArgument[]) => void;
   info: (...args: LogArgument[]) => void;
+  debug: (...args: LogArgument[]) => void;
 }
 
 class ExecutionError extends Error {
@@ -24,53 +17,108 @@ class ExecutionError extends Error {
   }
 }
 
-const formatConsoleArg = (arg: LogArgument): string => {
-  if (typeof arg === "object" && arg !== null) {
-    try {
-      return JSON.stringify(arg, null, 2);
-    } catch (err: unknown) {
-      console.log(err);
-      return "[Objeto Circular]";
-    }
-  }
-  return String(arg);
-};
-
+/**
+ * Crea un método de consola que preserva los tipos originales
+ */
 const createConsoleMethod = (
-  type: ConsoleMethod,
-  onOutput: (output: Omit<ConsoleOutput, "timestamp">) => void
+  type: ConsoleOutputType,
+  onOutput: (
+    type: ConsoleOutputType,
+    args: LogArgument[],
+    stack?: string
+  ) => void
 ) => {
   return (...args: LogArgument[]): void => {
-    onOutput({
-      type,
-      content: args.map(formatConsoleArg).join(" "),
-    });
+    // Capturar el stack trace para errores
+    let stack: string | undefined;
+    if (type === "error") {
+      // Crear un error para obtener el stack trace
+      const err = new Error();
+      stack = err.stack;
+
+      // Solo nos interesa la parte del stack que muestra la ubicación de la llamada
+      if (stack) {
+        // Dividir por líneas y eliminar las primeras que son internas de nuestro código
+        const stackLines = stack.split("\n");
+        // Normalmente, las 2 primeras líneas son de nuestro sistema, no del código del usuario
+        stack = stackLines.slice(2).join("\n");
+      }
+    }
+
+    // Enviamos los argumentos originales, preservando sus tipos
+    onOutput(type, [...args], stack);
   };
 };
 
+/**
+ * Ejecuta código JavaScript con consola mejorada que preserva tipos
+ */
 export const executeCode = async (
   code: string,
-  onOutput: (output: Omit<ConsoleOutput, "timestamp">) => void
-): Promise<void> => {
-  const customConsole: CustomConsole = {
-    log: createConsoleMethod("log", onOutput),
-    error: createConsoleMethod("error", onOutput),
-    warn: createConsoleMethod("warn", onOutput),
-    info: createConsoleMethod("info", onOutput),
-  };
-
+  onOutput: (
+    type: ConsoleOutputType,
+    args: LogArgument[],
+    stack?: string
+  ) => void
+): Promise<any> => {
+  // Crear el entorno seguro para ejecutar el código
   try {
-    const fn: (console: CustomConsole) => unknown = new Function(
-      "console",
-      code
-    ) as (console: CustomConsole) => unknown;
+    // Crear objeto console personalizado
+    const customConsole: CustomConsole = {
+      log: createConsoleMethod("log", onOutput),
+      error: createConsoleMethod("error", onOutput),
+      warn: createConsoleMethod("warn", onOutput),
+      info: createConsoleMethod("info", onOutput),
+      debug: createConsoleMethod("debug", onOutput),
+    };
 
-    await Promise.resolve(fn(customConsole));
+    // Inyectar las funciones de consola en el código
+    const secureCode = `
+      (async function() {
+        // Asegurar que la consola siempre está disponible
+        const console = {
+          log: customConsole.log,
+          error: customConsole.error,
+          warn: customConsole.warn,
+          info: customConsole.info,
+          debug: customConsole.debug
+        };
+        
+        try {
+          ${code}
+        } catch (error) {
+          console.error(error);
+          return {
+            error: true,
+            message: error.message,
+            stack: error.stack
+          };
+        }
+      })()
+    `;
+
+    // Crear una función segura que ejecute el código
+    const secureFunction = new Function("customConsole", secureCode);
+
+    // Ejecutar y capturar el resultado
+    const result = await secureFunction(customConsole);
+
+    // Comprobar si el resultado es un error
+    if (result && typeof result === "object" && result.error === true) {
+      throw new Error(result.message || "Error en la ejecución del código");
+    }
+
+    // Devolver el resultado (podría ser undefined)
+    return result;
   } catch (error) {
-    throw new ExecutionError(
-      error instanceof Error
-        ? error.message
-        : "Error desconocido durante la ejecución"
-    );
+    // Error durante la ejecución
+    if (error instanceof Error) {
+      onOutput("error", [error], error.stack);
+      throw new ExecutionError(error.message);
+    } else {
+      const unknownError = new Error("Unknown error during execution");
+      onOutput("error", [unknownError], unknownError.stack);
+      throw new ExecutionError("Unknown error during execution");
+    }
   }
 };

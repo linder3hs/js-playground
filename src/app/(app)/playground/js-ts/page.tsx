@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect } from "react";
-import { Header } from "@/components/layout/header";
 import { Workspace } from "@/components/layout/workspace";
 
 export default function Home() {
@@ -20,7 +19,6 @@ export default function Home() {
 
   return (
     <main className={`min-h-screen bg-background flex flex-col`}>
-      <Header />
       <div className="flex-1 overflow-hidden">
         <Workspace />
       </div>

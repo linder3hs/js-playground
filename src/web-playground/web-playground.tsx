@@ -17,23 +17,8 @@ import {
   Maximize,
   Minimize,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { useWebPlayground } from "./hooks/useWebPlayground";
+import { EditorToolbar } from "@/components/shared/EditorToolbar";
+import { useWebPlayground } from "@/hooks/use-web-playground";
 
 export function WebPlayground(): JSX.Element {
   const {
@@ -55,6 +40,65 @@ export function WebPlayground(): JSX.Element {
     handleEditorDidMount,
   } = useWebPlayground();
 
+  // Toolbar configuration
+  const toolbarActions = [
+    {
+      id: "run",
+      label: "Run",
+      icon: <Play className="w-4 h-4 mr-2" />,
+      onClick: updatePreview,
+      tooltip: "Run your code",
+    },
+    {
+      id: "download",
+      label: "Download",
+      icon: <Download className="w-4 h-4 mr-2" />,
+      onClick: downloadProject,
+      tooltip: "Download as HTML file",
+    },
+    {
+      id: "copy",
+      label: "Copy",
+      icon: <Copy className="w-4 h-4 mr-2" />,
+      onClick: copyHtmlToClipboard,
+      tooltip: "Copy HTML to clipboard",
+    },
+    {
+      id: "fullscreen",
+      label: "",
+      icon: isFullscreen ? (
+        <Minimize className="w-4 h-4" />
+      ) : (
+        <Maximize className="w-4 h-4" />
+      ),
+      onClick: toggleFullscreen,
+      tooltip: isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen",
+    },
+  ];
+
+  const toolbarToggles = [
+    {
+      id: "auto-update",
+      label: "Auto Update",
+      isChecked: autoUpdate,
+      onChange: setAutoUpdate,
+    },
+  ];
+
+  const toolbarSelects = [
+    {
+      id: "layout-select",
+      value: previewLayout,
+      onChange: (value: "split" | "bottom" | "right") =>
+        setPreviewLayout(value),
+      options: [
+        { value: "split", label: "Split" },
+        { value: "bottom", label: "Bottom" },
+        { value: "right", label: "Right" },
+      ],
+    },
+  ];
+
   return (
     <div
       className={`${
@@ -63,102 +107,14 @@ export function WebPlayground(): JSX.Element {
           : "h-[calc(100vh-4rem)]"
       }`}
     >
-      <div className="flex items-center justify-between bg-background px-4 py-2 border-b">
-        <div className="flex items-center gap-4">
-          <h2 className="text-lg font-semibold">Web Playground</h2>
-          <div className="flex items-center gap-1">
-            <Label htmlFor="auto-update" className="text-sm mr-1">
-              Auto Update
-            </Label>
-            <Switch
-              id="auto-update"
-              checked={autoUpdate}
-              onCheckedChange={setAutoUpdate}
-            />
-          </div>
-          <div className="flex items-center gap-5">
-            <Select
-              value={previewLayout}
-              onValueChange={(value: "split" | "bottom" | "right") =>
-                setPreviewLayout(value)
-              }
-            >
-              <SelectTrigger className="h-8 w-24">
-                <SelectValue placeholder="Layout" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="split">Split</SelectItem>
-                <SelectItem value="bottom">Bottom</SelectItem>
-                <SelectItem value="right">Right</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="outline" size="sm" onClick={updatePreview}>
-                  <Play className="w-4 h-4 mr-2" />
-                  Run
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Run your code</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="outline" size="sm" onClick={downloadProject}>
-                  <Download className="w-4 h-4 mr-2" />
-                  Download
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Download as HTML file</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={copyHtmlToClipboard}
-                >
-                  <Copy className="w-4 h-4 mr-2" />
-                  Copy
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Copy HTML to clipboard</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="outline" size="sm" onClick={toggleFullscreen}>
-                  {isFullscreen ? (
-                    <Minimize className="w-4 h-4" />
-                  ) : (
-                    <Maximize className="w-4 h-4" />
-                  )}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
-      </div>
+      {/* Toolbar */}
+      <EditorToolbar
+        title={{ text: "Web Playground" }}
+        actions={toolbarActions}
+        toggles={toolbarToggles}
+        selects={toolbarSelects}
+        darkMode={true}
+      />
 
       <ResizablePanelGroup direction={config.direction}>
         <ResizablePanel defaultSize={config.editorSize}>
@@ -298,24 +254,23 @@ export function WebPlayground(): JSX.Element {
           </Tabs>
         </ResizablePanel>
 
-        {/* Separador redimensionable */}
-        <ResizableHandle withHandle />
+        {/* Resizable handle */}
+        <ResizableHandle withHandle className="bg-gray-700 hover:bg-gray-600" />
 
-        {/* Panel de vista previa */}
+        {/* Preview panel */}
         <ResizablePanel defaultSize={config.previewSize}>
           <div className="h-full bg-background flex flex-col overflow-hidden border">
             <div className="bg-background px-4 py-2 border-b flex items-center justify-between">
               <h3 className="text-sm font-medium">Preview</h3>
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
+              {!autoUpdate && (
+                <button
                   onClick={updatePreview}
+                  className="p-1 rounded-md hover:bg-gray-700"
                   title="Refresh Preview"
                 >
                   <Play className="w-4 h-4" />
-                </Button>
-              </div>
+                </button>
+              )}
             </div>
             <div className="w-full h-full bg-white relative">
               <iframe
@@ -326,14 +281,13 @@ export function WebPlayground(): JSX.Element {
               />
               {!autoUpdate && (
                 <div className="absolute inset-0 bg-black/5 flex items-center justify-center pointer-events-none">
-                  <Button
+                  <button
                     onClick={updatePreview}
-                    className="pointer-events-auto"
-                    variant="secondary"
+                    className="pointer-events-auto px-4 py-2 bg-gray-800 text-gray-100 hover:bg-gray-700 rounded-md flex items-center"
                   >
                     <Play className="w-4 h-4 mr-2" />
                     Click to Run
-                  </Button>
+                  </button>
                 </div>
               )}
             </div>

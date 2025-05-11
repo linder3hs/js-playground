@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
 import { Editor } from "@monaco-editor/react";
 import {
   ResizableHandle,
@@ -9,256 +8,84 @@ import {
 } from "@/components/ui/resizable";
 import { Play, Download, Copy, Maximize, Minimize } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
-import { Monaco } from "@monaco-editor/react";
-import { MonacoEditor } from "@/web-playground/types";
-
-// Extend Window interface to include Monaco
-declare global {
-  interface Window {
-    monaco?: Monaco;
-  }
-}
+import { EditorToolbar } from "@/components/shared/EditorToolbar";
+import { useMarkdownPlayground } from "@/hooks/use-markdown-playground";
 
 export function MarkdownPlayground() {
-  const { toast } = useToast();
-  const [markdown, setMarkdown] = useState<string>(`# Markdown Editor
+  const {
+    markdown,
+    setMarkdown,
+    isFullscreen,
+    autoUpdate,
+    previewLayout,
+    editorFontSize,
+    previewRef,
+    toggleFullscreen,
+    setAutoUpdate,
+    setPreviewLayout,
+    downloadMarkdown,
+    copyMarkdown,
+    updatePreview,
+    editorWillMount,
+    handleEditorDidMount,
+  } = useMarkdownPlayground();
 
-## Welcome to JS Playground Markdown Editor
+  // Toolbar configuration
+  const toolbarActions = [
+    {
+      id: "update",
+      label: "Update",
+      icon: <Play className="w-4 h-4 mr-2 text-gray-300" />,
+      onClick: updatePreview,
+      tooltip: "Update preview",
+    },
+    {
+      id: "download",
+      label: "Download",
+      icon: <Download className="w-4 h-4 mr-2 text-gray-300" />,
+      onClick: downloadMarkdown,
+      tooltip: "Download as Markdown file",
+    },
+    {
+      id: "copy",
+      label: "Copy",
+      icon: <Copy className="w-4 h-4 mr-2 text-gray-300" />,
+      onClick: copyMarkdown,
+      tooltip: "Copy Markdown to clipboard",
+    },
+    {
+      id: "fullscreen",
+      label: "",
+      icon: isFullscreen ? (
+        <Minimize className="w-4 h-4 text-gray-300" />
+      ) : (
+        <Maximize className="w-4 h-4 text-gray-300" />
+      ),
+      onClick: toggleFullscreen,
+      tooltip: isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen",
+    },
+  ];
 
-This is a simple markdown editor with live preview. You can:
+  const toolbarToggles = [
+    {
+      id: "auto-update",
+      label: "Auto Update",
+      isChecked: autoUpdate,
+      onChange: setAutoUpdate,
+    },
+  ];
 
-> **Note**: This editor supports GitHub Flavored Markdown.
-`);
-
-  const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
-  const [autoUpdate, setAutoUpdate] = useState<boolean>(true);
-  const [previewLayout, setPreviewLayout] = useState<"right" | "left">("right");
-  const [editorFontSize] = useState<number>(14);
-
-  const previewRef = useRef<HTMLDivElement>(null);
-
-  const toggleFullscreen = (): void => {
-    setIsFullscreen(!isFullscreen);
-  };
-
-  const downloadMarkdown = (): void => {
-    const blob = new Blob([markdown], { type: "text/markdown" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "document.md";
-    a.click();
-    URL.revokeObjectURL(url);
-
-    toast({
-      title: "Downloaded",
-      description: "Markdown file has been downloaded successfully.",
-    });
-  };
-
-  const copyMarkdown = (): void => {
-    navigator.clipboard.writeText(markdown);
-
-    toast({
-      title: "Copied",
-      description: "Markdown has been copied to clipboard.",
-    });
-  };
-
-  const updatePreview = (): void => {
-    if (!previewRef.current) return;
-
-    // We'll use a simple markdown parser here
-    // In a real app, you might want to use a more robust solution like marked or remark
-    const html = parseMarkdown(markdown);
-    previewRef.current.innerHTML = html;
-
-    // Apply syntax highlighting to code blocks
-    const prismScript = document.createElement("script");
-    prismScript.textContent = `
-      if (typeof Prism !== 'undefined') {
-        Prism.highlightAll();
-      }
-    `;
-    previewRef.current.appendChild(prismScript);
-
-    // Render math if MathJax is available
-    const mathJaxScript = document.createElement("script");
-    mathJaxScript.textContent = `
-      if (typeof MathJax !== 'undefined') {
-        MathJax.typeset();
-      }
-    `;
-    previewRef.current.appendChild(mathJaxScript);
-  };
-
-  // Simple markdown parser (in a real app, use a library)
-  const parseMarkdown = (md: string): string => {
-    // This is a very simple parser and doesn't handle all markdown features
-    let html = md;
-
-    // Headers
-    html = html.replace(/^# (.*$)/gm, "<h1>$1</h1>");
-    html = html.replace(/^## (.*$)/gm, "<h2>$1</h2>");
-    html = html.replace(/^### (.*$)/gm, "<h3>$1</h3>");
-    html = html.replace(/^#### (.*$)/gm, "<h4>$1</h4>");
-    html = html.replace(/^##### (.*$)/gm, "<h5>$1</h5>");
-    html = html.replace(/^###### (.*$)/gm, "<h6>$1</h6>");
-
-    // Bold
-    html = html.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
-    html = html.replace(/__(.*?)__/g, "<strong>$1</strong>");
-
-    // Italic
-    html = html.replace(/\*(.*?)\*/g, "<em>$1</em>");
-    html = html.replace(/_(.*?)_/g, "<em>$1</em>");
-
-    // Code blocks
-    html = html.replace(
-      /\`\`\`([\s\S]*?)\`\`\`/g,
-      '<pre><code class="language-$1">$1</code></pre>'
-    );
-
-    // Inline code
-    html = html.replace(/\`(.*?)\`/g, "<code>$1</code>");
-
-    // Links
-    html = html.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2">$1</a>');
-
-    // Images
-    html = html.replace(/!\[(.*?)\]\((.*?)\)/g, '<img alt="$1" src="$2" />');
-
-    // Lists
-    html = html.replace(/^\* (.*$)/gm, "<ul><li>$1</li></ul>");
-    html = html.replace(/^- (.*$)/gm, "<ul><li>$1</li></ul>");
-    html = html.replace(/^(\d+)\. (.*$)/gm, "<ol><li>$2</li></ol>");
-
-    // Fix lists (this is a simplistic approach)
-    html = html.replace(/<\/ul><ul>/g, "");
-    html = html.replace(/<\/ol><ol>/g, "");
-
-    // Blockquotes
-    html = html.replace(/^> (.*$)/gm, "<blockquote>$1</blockquote>");
-    html = html.replace(/<\/blockquote><blockquote>/g, "<br/>");
-
-    // Paragraphs
-    html = html.replace(/\n\s*\n/g, "</p><p>");
-    html = "<p>" + html + "</p>";
-
-    // Tables (very simple implementation)
-    const tableRegex = /\|(.+)\|\n\|(?:[-:]+\|)+\n((?:\|.+\|\n)+)/g;
-    html = html.replace(tableRegex, (match, headers, rows) => {
-      const headerCells = headers
-        .split("|")
-        .filter((cell: string) => cell.trim() !== "");
-      const tableRows = rows.trim().split("\n");
-
-      let tableHtml = '<table class="md-table"><thead><tr>';
-      headerCells.forEach((header: string) => {
-        tableHtml += `<th>${header.trim()}</th>`;
-      });
-      tableHtml += "</tr></thead><tbody>";
-
-      tableRows.forEach((row: string) => {
-        tableHtml += "<tr>";
-        const cells = row
-          .split("|")
-          .filter((cell: string) => cell.trim() !== "");
-        cells.forEach((cell: string) => {
-          tableHtml += `<td>${cell.trim()}</td>`;
-        });
-        tableHtml += "</tr>";
-      });
-
-      tableHtml += "</tbody></table>";
-      return tableHtml;
-    });
-
-    // Math expressions (for rendering with MathJax)
-    html = html.replace(
-      /\$\$([\s\S]*?)\$\$/g,
-      '<div class="math">$$$$1$$</div>'
-    );
-    html = html.replace(/\$(.*?)\$/g, '<span class="math">\\($1\\)</span>');
-
-    return html;
-  };
-
-  // Update the preview when markdown changes
-  useEffect(() => {
-    if (autoUpdate) {
-      updatePreview();
-    }
-  }, [markdown, autoUpdate]);
-
-  // Force Monaco editor theme to apply correctly after initial render
-  useEffect(() => {
-    // Add a small timeout to ensure the editor is fully mounted
-    const timer = setTimeout(() => {
-      const editorElement = document.querySelector(".monaco-editor");
-      if (editorElement) {
-        // Force a redraw by toggling a class
-        editorElement.classList.add("force-dark-theme");
-        // Monaco global object might be available in window
-        if (window.monaco) {
-          window.monaco.editor.setTheme("vs-dark-custom");
-        }
-      }
-    }, 200);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Configure Monaco editor
-  const editorWillMount = (monaco: Monaco) => {
-    monaco.languages.register({ id: "markdown" });
-
-    // Definir un tema oscuro personalizado
-    monaco.editor.defineTheme("vs-dark-custom", {
-      base: "vs-dark",
-      inherit: true,
-      rules: [],
-      colors: {
-        "editor.background": "#1E1E1E",
-        "editor.foreground": "#D4D4D4",
-        "editor.lineHighlightBackground": "#2D2D30",
-        "editor.selectionBackground": "#264F78",
-        "editor.inactiveSelectionBackground": "#3A3D41",
-        "editorLineNumber.foreground": "#858585",
-      },
-    });
-
-    // Establecer como tema por defecto
-    monaco.editor.setTheme("vs-dark-custom");
-  };
-
-
-  // Force the theme to be applied correctly on mount
-  const handleEditorDidMount = (editor: MonacoEditor, monaco: Monaco) => {
-    monaco.editor.setTheme("vs-dark-custom");
-
-    // Force redraw the editor to apply theme correctly
-    setTimeout(() => {
-      editor.updateOptions({});
-      monaco.editor.setTheme("vs-dark-custom");
-    }, 100);
-  };
+  const toolbarSelects = [
+    {
+      id: "layout-select",
+      value: previewLayout,
+      onChange: (value: "right" | "left") => setPreviewLayout(value),
+      options: [
+        { value: "right", label: "Right" },
+        { value: "left", label: "Left" },
+      ],
+    },
+  ];
 
   const config = {
     direction: previewLayout === "right" ? "horizontal" : "horizontal",
@@ -272,129 +99,14 @@ This is a simple markdown editor with live preview. You can:
         isFullscreen ? "fixed inset-0 z-50 bg-gray-950" : "h-[calc(100vh-4rem)]"
       }`}
     >
-      <div className="flex items-center justify-between bg-gray-950 px-4 py-2 border-b border-gray-700 shadow-sm">
-        <div className="flex items-center gap-4">
-          <h2 className="text-lg font-semibold text-gray-100">
-            Markdown Editor
-          </h2>
-          <div className="flex items-center gap-1">
-            <Label htmlFor="auto-update" className="text-sm mr-1 text-gray-300">
-              Auto Update
-            </Label>
-            <Switch
-              id="auto-update"
-              checked={autoUpdate}
-              onCheckedChange={setAutoUpdate}
-            />
-          </div>
-          <div className="flex items-center gap-5">
-            <Select
-              value={previewLayout}
-              onValueChange={(value: "right" | "left") =>
-                setPreviewLayout(value)
-              }
-            >
-              <SelectTrigger className="h-8 w-24 border-gray-900 bg-gray-950 text-gray-100">
-                <SelectValue placeholder="Layout" />
-              </SelectTrigger>
-              <SelectContent className="bg-gray-800 border-gray-700 text-gray-100">
-                <SelectItem
-                  value="right"
-                  className="focus:bg-gray-700 focus:text-gray-100"
-                >
-                  Right
-                </SelectItem>
-                <SelectItem
-                  value="left"
-                  className="focus:bg-gray-700 focus:text-gray-100"
-                >
-                  Left
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={updatePreview}
-                  className="border-gray-700 bg-gray-800 text-gray-100 hover:bg-gray-700"
-                >
-                  <Play className="w-4 h-4 mr-2 text-gray-300" />
-                  Update
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Update preview</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={downloadMarkdown}
-                  className="border-gray-700 bg-gray-800 text-gray-100 hover:bg-gray-700"
-                >
-                  <Download className="w-4 h-4 mr-2 text-gray-300" />
-                  Download
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Download as Markdown file</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={copyMarkdown}
-                  className="border-gray-700 bg-gray-800 text-gray-100 hover:bg-gray-700"
-                >
-                  <Copy className="w-4 h-4 mr-2 text-gray-300" />
-                  Copy
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Copy Markdown to clipboard</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={toggleFullscreen}
-                  className="border-gray-700 bg-gray-800 text-gray-100 hover:bg-gray-700"
-                >
-                  {isFullscreen ? (
-                    <Minimize className="w-4 h-4 text-gray-300" />
-                  ) : (
-                    <Maximize className="w-4 h-4 text-gray-300" />
-                  )}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
-      </div>
+      {/* Toolbar */}
+      <EditorToolbar
+        title={{ text: "Markdown Editor" }}
+        actions={toolbarActions}
+        toggles={toolbarToggles}
+        selects={toolbarSelects}
+        darkMode={true}
+      />
 
       {/* Resizable panels */}
       <ResizablePanelGroup
@@ -405,8 +117,8 @@ This is a simple markdown editor with live preview. You can:
           <ResizablePanel defaultSize={config.previewSize}>
             <div className="h-full bg-gray-900 flex flex-col overflow-hidden border border-gray-900 shadow-sm">
               <div className="bg-gray-950 px-4 py-2 border-b border-gray-900 flex items-center justify-between">
-                <h3 className="text-sm font-medium text-gray-200">Previewsss</h3>
-                <div className="flex items-center space-x-2">
+                <h3 className="text-sm font-medium text-gray-200">Preview</h3>
+                {!autoUpdate && (
                   <Button
                     variant="ghost"
                     size="sm"
@@ -416,9 +128,9 @@ This is a simple markdown editor with live preview. You can:
                   >
                     <Play className="w-4 h-4" />
                   </Button>
-                </div>
+                )}
               </div>
-              <div className="w-full h-full bg-gray-900 overflow-auto p-4">
+              <div className="w-full h-full bg-gray-900 overflow-auto p-4 relative">
                 <div
                   ref={previewRef}
                   className="markdown-preview prose max-w-none dark-mode"
@@ -476,7 +188,7 @@ This is a simple markdown editor with live preview. You can:
             <div className="h-full bg-gray-900 flex flex-col overflow-hidden border border-gray-700 shadow-sm">
               <div className="bg-gray-800 px-4 py-2 border-b border-gray-700 flex items-center justify-between">
                 <h3 className="text-sm font-medium text-gray-200">Preview</h3>
-                <div className="flex items-center space-x-2">
+                {!autoUpdate && (
                   <Button
                     variant="ghost"
                     size="sm"
@@ -486,9 +198,9 @@ This is a simple markdown editor with live preview. You can:
                   >
                     <Play className="w-4 h-4" />
                   </Button>
-                </div>
+                )}
               </div>
-              <div className="w-full h-full bg-gray-900 overflow-auto p-4">
+              <div className="w-full h-full bg-gray-900 overflow-auto p-4 relative">
                 <div
                   ref={previewRef}
                   className="markdown-preview prose max-w-none dark-mode"
@@ -511,7 +223,7 @@ This is a simple markdown editor with live preview. You can:
         )}
       </ResizablePanelGroup>
 
-      {/* Add CSS for markdown preview and monaco editor */}
+      {/* CSS for markdown preview (keeping the same styles for consistency) */}
       <style jsx global>{`
         .markdown-preview {
           color: #e2e8f0;
