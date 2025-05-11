@@ -1,3 +1,24 @@
+// Definir un tipo para valores que pueden ser procesados por la consola
+export type ConsoleValue =
+  | string
+  | number
+  | boolean
+  | bigint
+  | symbol
+  | null
+  | undefined
+  | Function
+  | Date
+  | RegExp
+  | Error
+  | Promise<unknown>
+  | Map<unknown, unknown>
+  | Set<unknown>
+  | Array<unknown>
+  | Record<string, unknown>
+  | object
+  | unknown;
+
 export type ConsoleOutputType = "log" | "error" | "warn" | "info" | "debug";
 
 export type ValueType =
@@ -21,7 +42,7 @@ export type ValueType =
 
 export interface ProcessedValue {
   type: ValueType;
-  value: any;
+  value: ConsoleValue; // Reemplazado any con ConsoleValue
   preview?: string;
   hasChildren?: boolean;
   childrenCount?: number;
@@ -37,7 +58,7 @@ export interface ConsoleOutput {
   type: ConsoleOutputType;
   timestamp: number;
   values: ProcessedValue[];
-  rawValues: any[];
+  rawValues: ConsoleValue[]; // Reemplazado any[] con ConsoleValue[]
   stack?: string;
 }
 

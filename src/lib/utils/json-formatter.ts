@@ -1,10 +1,32 @@
 /**
+ * Tipos de valores posibles en JSON
+ */
+export type JSONValue =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: JSONValue }
+  | JSONValue[];
+
+/**
+ * Tipos posibles de nodos JSON
+ */
+export type JSONNodeType =
+  | "string"
+  | "number"
+  | "boolean"
+  | "null"
+  | "object"
+  | "array";
+
+/**
  * Interface for a node in the JSON tree structure
  */
 export interface JSONNode {
   key: string;
-  value: any;
-  type: string;
+  value: JSONValue;
+  type: JSONNodeType;
   depth: number;
   expanded: boolean;
   path: string;
@@ -26,7 +48,7 @@ export function formatJSON(
 } {
   try {
     // Parse the JSON string to an object
-    const obj = JSON.parse(jsonString);
+    const obj: JSONValue = JSON.parse(jsonString);
 
     // Convert back to a formatted string with the specified indentation
     const formatted = JSON.stringify(obj, null, spaces);
@@ -67,6 +89,17 @@ export function validateJSON(jsonString: string): {
 }
 
 /**
+ * Determina el tipo de un valor JSON
+ * @param value - El valor a comprobar
+ * @returns El tipo del valor como JSONNodeType
+ */
+function getJSONType(value: JSONValue): JSONNodeType {
+  if (value === null) return "null";
+  if (Array.isArray(value)) return "array";
+  return typeof value as JSONNodeType;
+}
+
+/**
  * Convert a JSON object to a tree structure for display
  * @param obj - The JSON object to convert
  * @param parent - Parent path (for nested objects)
@@ -74,16 +107,17 @@ export function validateJSON(jsonString: string): {
  * @returns Array of JSONNode objects representing the tree
  */
 export function buildJSONTree(
-  obj: any,
+  obj: JSONValue,
   parent: string = "",
   depth: number = 0
 ): JSONNode[] {
-  if (!obj || typeof obj !== "object") return [];
+  // Si no es un objeto o array, o es null, devolver array vacío
+  if (obj === null || typeof obj !== "object") return [];
 
-  return Object.keys(obj).map((key) => {
-    const value = obj[key];
+  return Object.keys(obj as object).map((key) => {
+    const value = (obj as { [key: string]: JSONValue })[key];
     const path = parent ? `${parent}.${key}` : key;
-    const type = Array.isArray(value) ? "array" : typeof value;
+    const type = getJSONType(value);
     const isObject = value !== null && typeof value === "object";
 
     const node: JSONNode = {
@@ -108,7 +142,7 @@ export function buildJSONTree(
  * @param value - The value to check
  * @returns CSS class name for styling
  */
-export function getValueStyle(value: any): string {
+export function getValueStyle(value: JSONValue): string {
   if (value === null) return "text-red-400";
 
   switch (typeof value) {
@@ -128,7 +162,7 @@ export function getValueStyle(value: any): string {
  * @param value - The value to format
  * @returns Formatted string representation
  */
-export function formatValueForDisplay(value: any): string {
+export function formatValueForDisplay(value: JSONValue): string {
   if (value === null) return "null";
   if (typeof value === "string") return `"${value}"`;
   return String(value);

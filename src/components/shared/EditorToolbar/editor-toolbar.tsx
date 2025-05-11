@@ -51,11 +51,15 @@ export interface ToolbarTitle {
   text: string;
 }
 
+// Definimos un tipo para los posibles valores de selección
+export type SelectValue = string;
+
+// Modificamos EditorToolbarProps para usar el tipo específico
 export interface EditorToolbarProps {
   title?: ToolbarTitle;
   actions?: ToolbarAction[];
   toggles?: ToolbarToggle[];
-  selects?: ToolbarSelect<any>[];
+  selects?: ToolbarSelect<SelectValue>[];
   className?: string;
   darkMode?: boolean;
 }

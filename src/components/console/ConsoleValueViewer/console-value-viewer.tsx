@@ -163,7 +163,7 @@ export function ConsoleValueViewer({
           </span>
         )}
 
-        <span className={getValueColor(value.type)}>
+        <span className={`${getValueColor(value.type)} whitespace-pre-wrap`}>
           {value.preview || String(value.value)}
         </span>
 

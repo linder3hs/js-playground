@@ -18,6 +18,7 @@
 /* Diferentes tipos de valores */
 .console-string {
   color: #CE9178;
+  white-space: pre-wrap;
 }
 
 .console-number {

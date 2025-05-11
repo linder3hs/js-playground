@@ -22,7 +22,6 @@ export const Workspace = () => {
   const {
     orientation,
     setOrientation,
-    activePanel,
     isExecuting,
     runCode,
     clearConsole,

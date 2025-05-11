@@ -6,6 +6,27 @@ import { ConsoleOutputType } from "@/components/console/types";
 import { Monaco } from "@monaco-editor/react";
 import { MonacoEditor } from "@/web-playground/types";
 
+// Define un tipo para valores que pueden manejarse en la consola
+export type ConsoleValue =
+  | string
+  | number
+  | boolean
+  | bigint
+  | symbol
+  | null
+  | undefined
+  | Function
+  | Date
+  | RegExp
+  | Error
+  | Promise<unknown>
+  | Map<unknown, unknown>
+  | Set<unknown>
+  | Array<unknown>
+  | Record<string, unknown>
+  | object
+  | unknown;
+
 export function useEditor() {
   const {
     files,
@@ -50,12 +71,15 @@ export function useEditor() {
     try {
       await executeCode(
         code,
-        (type: ConsoleOutputType, args: any[], stack?: string) => {
+        (type: ConsoleOutputType, args: ConsoleValue[], stack?: string) => {
           addOutput(type, args, stack);
         }
       );
     } catch (error) {
-      console.error("Error executing code:", error);
+      console.error(
+        "Error executing code:",
+        error instanceof Error ? error.message : "Unknown error"
+      );
     } finally {
       setIsExecuting(false);
       setExecutingCode(false);
@@ -89,16 +113,52 @@ export function useEditor() {
         run: runCode,
       });
 
-      // Añadir tipos para console
+      // Añadir tipos para console con tipos específicos en lugar de any
       monaco.languages.typescript.javascriptDefaults.addExtraLib(
         `
+      /**
+       * Type for values that can be logged to the console
+       */
+      type ConsoleValue = string | number | boolean | null | undefined | object;
+
+      /**
+       * Console interface with proper types
+       */
       interface Console {
-        log(...data: any[]): void;
-        error(...data: any[]): void;
-        warn(...data: any[]): void;
-        info(...data: any[]): void;
-        debug(...data: any[]): void;
+        /**
+         * Log information to the console
+         * @param data - Values to be logged
+         */
+        log(...data: ConsoleValue[]): void;
+        
+        /**
+         * Log error information to the console
+         * @param data - Values to be logged
+         */
+        error(...data: ConsoleValue[]): void;
+        
+        /**
+         * Log warning information to the console
+         * @param data - Values to be logged
+         */
+        warn(...data: ConsoleValue[]): void;
+        
+        /**
+         * Log information messages to the console
+         * @param data - Values to be logged
+         */
+        info(...data: ConsoleValue[]): void;
+        
+        /**
+         * Log debug information to the console
+         * @param data - Values to be logged
+         */
+        debug(...data: ConsoleValue[]): void;
       }
+      
+      /**
+       * Global console object
+       */
       declare const console: Console;
     `,
         "console.d.ts"
@@ -123,6 +183,7 @@ export function useEditor() {
     if (filteredOutputs.length === 0 && files[currentFile]?.trim()) {
       runCode();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return {

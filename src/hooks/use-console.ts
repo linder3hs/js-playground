@@ -7,6 +7,27 @@ import {
 } from "@/components/console/types";
 import { processConsoleValues } from "@/lib/utils/console-formatter";
 
+// Definición de tipo para valores que la consola puede manejar
+export type ConsoleValue =
+  | string
+  | number
+  | boolean
+  | bigint
+  | symbol
+  | null
+  | undefined
+  | Function
+  | Date
+  | RegExp
+  | Error
+  | Promise<unknown>
+  | Map<unknown, unknown>
+  | Set<unknown>
+  | Array<unknown>
+  | Record<string, unknown>
+  | object
+  | unknown;
+
 // Generar ID único para mensajes de consola
 const generateId = (): string =>
   `console_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
@@ -50,7 +71,7 @@ export function useConsole(options: UseConsoleOptions = {}) {
 
   // Añadir un mensaje a la consola con manejo de errores
   const addOutput = useCallback(
-    (type: ConsoleOutputType, args: any[], stack?: string) => {
+    (type: ConsoleOutputType, args: ConsoleValue[], stack?: string) => {
       if (!isMounted.current) return;
 
       setState((prev) => {
@@ -72,7 +93,11 @@ export function useConsole(options: UseConsoleOptions = {}) {
             });
           } catch (err) {
             // Si falla el procesamiento, mostrar error simple
-            console.error("Error processing console values:", err);
+            console.error(
+              "Error processing console values:",
+              err instanceof Error ? err.message : "Unknown error"
+            );
+
             processedValues = [
               {
                 type: "error",
@@ -102,7 +127,10 @@ export function useConsole(options: UseConsoleOptions = {}) {
             outputs: newOutputs,
           };
         } catch (error) {
-          console.error("Error adding console output:", error);
+          console.error(
+            "Error adding console output:",
+            error instanceof Error ? error.message : "Unknown error"
+          );
           // En caso de error, devolver el estado anterior sin cambios
           return prev;
         }

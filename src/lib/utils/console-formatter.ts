@@ -4,6 +4,27 @@ import {
   ConsoleFormatterOptions,
 } from "@/components/console/types";
 
+// Definir un tipo para cualquier valor que pueda manejar la consola
+export type ConsoleValue =
+  | string
+  | number
+  | boolean
+  | bigint
+  | symbol
+  | null
+  | undefined
+  | Function
+  | Date
+  | RegExp
+  | Error
+  | Promise<unknown>
+  | Map<unknown, unknown>
+  | Set<unknown>
+  | Array<unknown>
+  | Record<string, unknown>
+  | object
+  | unknown;
+
 // Marcador para WeakMap global - lo recrearemos para cada invocación
 let circularReferences: WeakMap<object, string>;
 
@@ -16,7 +37,7 @@ const getNextValueId = () => `val_${valueIdCounter++}`;
 /**
  * Detecta el tipo de un valor JavaScript
  */
-export function detectValueType(value: any): ValueType {
+export function detectValueType(value: ConsoleValue): ValueType {
   if (value === null) return "null";
   if (value === undefined) return "undefined";
 
@@ -49,46 +70,58 @@ export function detectValueType(value: any): ValueType {
 /**
  * Formatea un valor para mostrar una vista previa
  */
-export function formatValuePreview(value: any, type: ValueType): string {
+export function formatValuePreview(
+  value: ConsoleValue,
+  type: ValueType
+): string {
   switch (type) {
     case "string":
-      return `"${value.length > 100 ? value.substring(0, 97) + "..." : value}"`;
+      const strValue = value as string;
+      const formattedValue = strValue.replaceAll("\n", "<br>");
+      return `"${
+        formattedValue.length > 100
+          ? formattedValue.substring(0, 97) + "..."
+          : formattedValue
+      }"`;
     case "number":
-      return Number.isInteger(value)
-        ? value.toString()
-        : value.toFixed(10).replace(/\.?0+$/, "");
+      const numValue = value as number;
+      return Number.isInteger(numValue)
+        ? numValue.toString()
+        : numValue.toFixed(10).replace(/\.?0+$/, "");
     case "boolean":
-      return value.toString();
+      return (value as boolean).toString();
     case "null":
       return "null";
     case "undefined":
       return "undefined";
     case "symbol":
-      return value.toString();
+      return (value as symbol).toString();
     case "bigint":
-      return `${value.toString()}n`;
+      return `${(value as bigint).toString()}n`;
     case "function":
-      const funcStr = value.toString();
+      const funcStr = (value as Function).toString();
       const firstLine = funcStr.split("\n")[0];
       return firstLine.length > 60
         ? `${firstLine.substring(0, 57)}...`
         : firstLine;
     case "date":
-      return value.toISOString();
+      return (value as Date).toISOString();
     case "regexp":
-      return value.toString();
+      return (value as RegExp).toString();
     case "error":
-      return `${value.name}: ${value.message}`;
+      const err = value as Error;
+      return `${err.name}: ${err.message}`;
     case "promise":
       return "[Promise]";
     case "array":
-      return `Array(${value.length})`;
+      return `Array(${(value as unknown[]).length})`;
     case "map":
-      return `Map(${value.size})`;
+      return `Map(${(value as Map<unknown, unknown>).size})`;
     case "set":
-      return `Set(${value.size})`;
+      return `Set(${(value as Set<unknown>).size})`;
     case "object":
-      const constructor = value.constructor?.name;
+      const obj = value as object;
+      const constructor = obj.constructor?.name;
       if (constructor && constructor !== "Object") {
         return `${constructor} {}`;
       }
@@ -103,24 +136,25 @@ export function formatValuePreview(value: any, type: ValueType): string {
 /**
  * Verifica si un valor tiene hijos (propiedades expandibles)
  */
-export function hasChildren(value: any, type: ValueType): boolean {
+export function hasChildren(value: ConsoleValue, type: ValueType): boolean {
   switch (type) {
     case "array":
-      return Array.isArray(value) && value.length > 0;
+      return Array.isArray(value) && (value as unknown[]).length > 0;
     case "object":
       return (
         value !== null &&
         typeof value === "object" &&
-        Object.keys(value).length > 0
+        Object.keys(value as object).length > 0
       );
     case "map":
-      return value instanceof Map && value.size > 0;
+      return value instanceof Map && (value as Map<unknown, unknown>).size > 0;
     case "set":
-      return value instanceof Set && value.size > 0;
+      return value instanceof Set && (value as Set<unknown>).size > 0;
     case "error":
+      const err = value as Error;
       return (
         value instanceof Error &&
-        (Object.keys(value).length > 0 || value.stack !== undefined)
+        (Object.keys(err).length > 0 || err.stack !== undefined)
       );
     default:
       return false;
@@ -130,21 +164,22 @@ export function hasChildren(value: any, type: ValueType): boolean {
 /**
  * Cuenta el número de hijos de un valor
  */
-export function countChildren(value: any, type: ValueType): number {
+export function countChildren(value: ConsoleValue, type: ValueType): number {
   switch (type) {
     case "array":
-      return Array.isArray(value) ? value.length : 0;
+      return Array.isArray(value) ? (value as unknown[]).length : 0;
     case "object":
       return value !== null && typeof value === "object"
-        ? Object.keys(value).length
+        ? Object.keys(value as object).length
         : 0;
     case "map":
-      return value instanceof Map ? value.size : 0;
+      return value instanceof Map ? (value as Map<unknown, unknown>).size : 0;
     case "set":
-      return value instanceof Set ? value.size : 0;
+      return value instanceof Set ? (value as Set<unknown>).size : 0;
     case "error":
+      const err = value as Error;
       return value instanceof Error
-        ? Object.keys(value).length + (value.stack ? 1 : 0)
+        ? Object.keys(err).length + (err.stack ? 1 : 0)
         : 0;
     default:
       return 0;
@@ -155,7 +190,7 @@ export function countChildren(value: any, type: ValueType): number {
  * Procesa objetos anidados para la visualización en consola
  */
 export function processValue(
-  value: any,
+  value: ConsoleValue,
   path: string = "root",
   depth: number = 0,
   key?: string | number,
@@ -170,7 +205,7 @@ export function processValue(
 
   // Para detectar referencias circulares
   if (detectCircular && typeof value === "object" && value !== null) {
-    if (circularReferences.has(value)) {
+    if (circularReferences.has(value as object)) {
       return {
         type: "circular",
         value: "[Circular Reference]",
@@ -182,7 +217,7 @@ export function processValue(
         hasChildren: false,
       };
     }
-    circularReferences.set(value, path);
+    circularReferences.set(value as object, path);
   }
 
   // Detectar tipo del valor
@@ -219,10 +254,15 @@ export function processValue(
 }
 
 /**
+ * Tipo para representar entradas de Map
+ */
+type MapEntry = [unknown, unknown];
+
+/**
  * Procesa un valor complejo para obtener sus hijos
  */
 export function processChildren(
-  parentValue: any,
+  parentValue: ConsoleValue,
   parentType: ValueType,
   parentPath: string,
   depth: number,
@@ -272,15 +312,16 @@ export function processChildren(
       if (parentValue === null || typeof parentValue !== "object")
         return children;
 
+      const objValue = parentValue as Record<string, unknown>;
       const maxObjectProps = options.maxObjectPropertiesDisplay || 100;
-      const keys = Object.keys(parentValue);
+      const keys = Object.keys(objValue);
       const displayProps = Math.min(keys.length, maxObjectProps);
 
       for (let i = 0; i < displayProps; i++) {
         const key = keys[i];
         const childPath = `${parentPath}.${key}`;
         const child = processValue(
-          parentValue[key],
+          objValue[key],
           childPath,
           depth + 1,
           key,
@@ -305,16 +346,17 @@ export function processChildren(
       // Para Maps, convertir a entradas
       if (!(parentValue instanceof Map)) return children;
 
-      const mapEntries = Array.from(parentValue.entries());
+      const mapValue = parentValue as Map<unknown, unknown>;
+      const mapEntries = Array.from(mapValue.entries()) as MapEntry[];
       const maxMapEntries = options.maxObjectPropertiesDisplay || 100;
       const displayEntries = Math.min(mapEntries.length, maxMapEntries);
 
       for (let i = 0; i < displayEntries; i++) {
-        const [key, val] = mapEntries[i];
+        const [mapKey, mapVal] = mapEntries[i];
         // Procesar la clave
         const keyPath = `${parentPath}.key[${i}]`;
         const keyValue = processValue(
-          key,
+          mapKey,
           keyPath,
           depth + 1,
           `key ${i}`,
@@ -324,7 +366,7 @@ export function processChildren(
         // Procesar el valor
         const valPath = `${parentPath}.val[${i}]`;
         const valValue = processValue(
-          val,
+          mapVal,
           valPath,
           depth + 1,
           `value ${i}`,
@@ -349,7 +391,8 @@ export function processChildren(
       // Para Sets, convertir a array
       if (!(parentValue instanceof Set)) return children;
 
-      const setValues = Array.from(parentValue.values());
+      const setValue = parentValue as Set<unknown>;
+      const setValues = Array.from(setValue.values());
       const maxSetValues = options.maxArrayChildrenDisplay || 100;
       const displayValues = Math.min(setValues.length, maxSetValues);
 
@@ -370,13 +413,14 @@ export function processChildren(
       // Para errores, mostrar propiedades y stack
       if (!(parentValue instanceof Error)) return children;
 
-      const errorKeys = Object.keys(parentValue);
+      const errorValue = parentValue as Error;
+      const errorKeys = Object.keys(errorValue);
 
       // Añadir el stack trace primero
-      if (parentValue.stack) {
+      if (errorValue.stack) {
         children.push({
           type: "string",
-          value: parentValue.stack,
+          value: errorValue.stack,
           preview: "stack",
           depth: depth + 1,
           path: `${parentPath}.stack`,
@@ -390,8 +434,9 @@ export function processChildren(
         if (key !== "stack") {
           // El stack ya lo hemos añadido
           const childPath = `${parentPath}.${key}`;
+          const childValue = errorValue[key as keyof Error];
           const child = processValue(
-            parentValue[key as keyof Error],
+            childValue as ConsoleValue,
             childPath,
             depth + 1,
             key,
@@ -410,7 +455,7 @@ export function processChildren(
  * Procesa múltiples valores para console.log
  */
 export function processConsoleValues(
-  values: any[],
+  values: ConsoleValue[],
   options: ConsoleFormatterOptions = {}
 ): ProcessedValue[] {
   // En vez de intentar limpiar, crear un nuevo WeakMap para cada invocación

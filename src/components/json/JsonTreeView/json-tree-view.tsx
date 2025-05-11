@@ -35,7 +35,7 @@ export function JsonTreeView({
 
     // Calculate value style and display format
     const valueStyle = getValueStyle(node.value);
-    let valueDisplay: React.ReactNode = formatValueForDisplay(node.value);
+    const valueDisplay: React.ReactNode = formatValueForDisplay(node.value);
 
     return (
       <div key={node.path}>

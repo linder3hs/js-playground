@@ -12,13 +12,13 @@ import {
   ChevronUp,
 } from "lucide-react";
 import { ConsoleOutput } from "../ConsoleOutput";
-import { ConsoleOutputType } from "../types";
+import { ConsoleOutput as IConsoleOutput, ConsoleOutputType } from "../types";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useEffect, useRef } from "react";
 
 interface ConsolePanelProps {
-  outputs: any[];
+  outputs: IConsoleOutput[];
   expandedPaths: Set<string>;
   selectedOutput: string | null;
   filter: ConsoleOutputType | "all";
