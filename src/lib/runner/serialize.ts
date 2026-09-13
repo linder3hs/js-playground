@@ -15,7 +15,7 @@ import {
  * existe el objeto original para recorrer.
  */
 
-const MAX_DEPTH = 4;
+const MAX_DEPTH = 6;
 const MAX_CHILDREN = 100;
 
 /** Valores que structured clone acepta tal cual */
@@ -66,6 +66,8 @@ function serializeValue(
 
   const type = detectValueType(value);
   const expandable = hasChildren(value, type);
+  const isContainer =
+    type === "array" || type === "object" || type === "map" || type === "set";
 
   const node: ProcessedValue = {
     type,
@@ -78,14 +80,15 @@ function serializeValue(
     id: ctx.nextId(),
   };
 
+  // El contador va incluso en contenedores vacíos: es lo que le permite al
+  // viewer distinguir `[]` de un array recortado por profundidad.
+  if (isContainer) node.childrenCount = countChildren(value, type);
+
   if (!expandable) return node;
 
-  node.childrenCount = countChildren(value, type);
-
   if (depth >= MAX_DEPTH) {
-    // Más profundo no se serializa: se anuncia, pero no se puede desplegar.
+    // Más profundo no se serializa. El viewer lo imprime como `[…]`.
     node.hasChildren = false;
-    node.preview = `${node.preview} …`;
     return node;
   }
 

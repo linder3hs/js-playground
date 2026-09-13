@@ -54,14 +54,20 @@ export function detectValueType(value: unknown): ValueType {
  */
 export function formatValuePreview(value: unknown, type: ValueType): string {
   switch (type) {
-    case "string":
-      const strValue = value as string;
-      const formattedValue = strValue.replaceAll("\n", "<br>");
-      return `"${
-        formattedValue.length > 100
-          ? formattedValue.substring(0, 97) + "..."
-          : formattedValue
-      }"`;
+    case "string": {
+      // Comillas simples y escapes reales: la salida se lee como un literal
+      // que se puede pegar de vuelta en el código. Antes los saltos de línea
+      // se reemplazaban por "<br>", que se renderizaba tal cual.
+      const raw = value as string;
+      const escaped = raw
+        .replace(/\\/g, "\\\\")
+        .replace(/\n/g, "\\n")
+        .replace(/\t/g, "\\t")
+        .replace(/'/g, "\\'");
+      return `'${
+        escaped.length > 200 ? `${escaped.slice(0, 197)}...` : escaped
+      }'`;
+    }
     case "number":
       const numValue = value as number;
       return Number.isInteger(numValue)

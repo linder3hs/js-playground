@@ -7,8 +7,6 @@ import { cn } from "@/lib/utils";
 
 interface ConsoleOutputProps {
   output: ConsoleOutputType;
-  expandedPaths: Set<string>;
-  onToggleExpand: (path: string) => void;
   isSelected: boolean;
   onSelect: (id: string | null) => void;
 }
@@ -54,8 +52,6 @@ function LevelIcon({ type }: { type: ConsoleOutputType["type"] }) {
 
 export function ConsoleOutput({
   output,
-  expandedPaths,
-  onToggleExpand,
   isSelected,
   onSelect,
 }: ConsoleOutputProps) {
@@ -77,14 +73,13 @@ export function ConsoleOutput({
       </span>
 
       <div className="min-w-0 flex-1 overflow-x-auto">
+        {/* Varios argumentos se imprimen separados por un espacio, como en
+            cualquier consola: console.log("total", 42) -> total 42 */}
         {output.values.map((value, index) => (
-          <ConsoleValueViewer
-            key={`${output.id}-${index}`}
-            value={value}
-            expandedPaths={expandedPaths}
-            onToggleExpand={onToggleExpand}
-            showKey={output.values.length > 1}
-          />
+          <span key={`${output.id}-${index}`}>
+            {index > 0 && " "}
+            <ConsoleValueViewer value={value} />
+          </span>
         ))}
 
         {isError && output.stack && isSelected && (

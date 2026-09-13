@@ -31,7 +31,6 @@ export const Workspace = () => {
     clearConsole,
     consoleState,
     consoleOutputs,
-    toggleConsoleExpand,
     setConsoleFilter,
     selectConsoleOutput,
   } = useEditor();
@@ -89,13 +88,11 @@ export const Workspace = () => {
           <ConsolePanel
             outputs={consoleOutputs}
             allOutputs={consoleState.outputs}
-            expandedPaths={consoleState.expandedPaths}
             selectedOutput={consoleState.selectedOutput}
             filter={consoleState.filter}
             executingCode={consoleState.executingCode}
             autoRun={autoRun}
             onClear={clearConsole}
-            onToggleExpand={toggleConsoleExpand}
             onSetFilter={setConsoleFilter}
             onSelectOutput={selectConsoleOutput}
             className="h-full"

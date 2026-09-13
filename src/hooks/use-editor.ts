@@ -51,7 +51,6 @@ export function useEditor() {
     filteredOutputs,
     addProcessedOutput,
     clearConsole,
-    toggleExpand,
     setFilter,
     selectOutput,
     setExecutingCode,
@@ -234,7 +233,6 @@ export function useEditor() {
     setOrientation,
     clearConsole,
     handleEditorDidMount,
-    toggleConsoleExpand: toggleExpand,
     setConsoleFilter: setFilter,
     selectConsoleOutput: selectOutput,
   };

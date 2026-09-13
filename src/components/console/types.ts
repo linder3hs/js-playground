@@ -86,7 +86,6 @@ export interface ConsoleFormatterOptions {
 
 export interface ConsoleState {
   outputs: ConsoleOutput[];
-  expandedPaths: Set<string>;
   selectedOutput: string | null;
   filter: ConsoleOutputType | "all";
   isOpen: boolean;

@@ -11,13 +11,11 @@ interface ConsolePanelProps {
   outputs: IConsoleOutput[];
   /** Sin filtrar: los contadores deben seguir visibles con un filtro activo */
   allOutputs: IConsoleOutput[];
-  expandedPaths: Set<string>;
   selectedOutput: string | null;
   filter: ConsoleOutputType | "all";
   executingCode: boolean;
   autoRun: boolean;
   onClear: () => void;
-  onToggleExpand: (path: string) => void;
   onSetFilter: (filter: ConsoleOutputType | "all") => void;
   onSelectOutput: (id: string | null) => void;
   className?: string;
@@ -62,13 +60,11 @@ function CountChip({
 export function ConsolePanel({
   outputs,
   allOutputs,
-  expandedPaths,
   selectedOutput,
   filter,
   executingCode,
   autoRun,
   onClear,
-  onToggleExpand,
   onSetFilter,
   onSelectOutput,
   className,
@@ -150,8 +146,6 @@ export function ConsolePanel({
             <ConsoleOutput
               key={output.id}
               output={output}
-              expandedPaths={expandedPaths}
-              onToggleExpand={onToggleExpand}
               isSelected={output.id === selectedOutput}
               onSelect={onSelectOutput}
             />

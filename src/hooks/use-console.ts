@@ -49,7 +49,6 @@ export function useConsole(options: UseConsoleOptions = {}) {
 
   const [state, setState] = useState<ConsoleState>({
     outputs: [],
-    expandedPaths: new Set<string>(),
     selectedOutput: null,
     filter: initialFilter,
     isOpen: initiallyOpen,
@@ -63,7 +62,6 @@ export function useConsole(options: UseConsoleOptions = {}) {
     setState((prev) => ({
       ...prev,
       outputs: [],
-      expandedPaths: new Set(),
       selectedOutput: null,
     }));
   }, []);
@@ -167,26 +165,6 @@ export function useConsole(options: UseConsoleOptions = {}) {
     [maxOutputs]
   );
 
-  // Alternar la expansión de un nodo
-  const toggleExpand = useCallback((path: string) => {
-    if (!path || !isMounted.current) return;
-
-    setState((prev) => {
-      const newExpandedPaths = new Set(prev.expandedPaths);
-
-      if (newExpandedPaths.has(path)) {
-        newExpandedPaths.delete(path);
-      } else {
-        newExpandedPaths.add(path);
-      }
-
-      return {
-        ...prev,
-        expandedPaths: newExpandedPaths,
-      };
-    });
-  }, []);
-
   // Cambiar el filtro de la consola
   const setFilter = useCallback((filter: ConsoleOutputType | "all") => {
     if (!isMounted.current) return;
@@ -236,62 +214,6 @@ export function useConsole(options: UseConsoleOptions = {}) {
     return state.outputs.filter((output) => output.type === state.filter);
   }, [state.outputs, state.filter]);
 
-  // Expandir todos los nodos de un mensaje
-  const expandAllInOutput = useCallback((outputId: string) => {
-    if (!outputId || !isMounted.current) return;
-
-    setState((prev) => {
-      const output = prev.outputs.find((o) => o.id === outputId);
-      if (!output) return prev;
-
-      const newExpandedPaths = new Set(prev.expandedPaths);
-
-      // Recorre el árbol completo: los hijos ya vienen serializados.
-      const addAllPaths = (values: ProcessedValue[]) => {
-        values.forEach((value) => {
-          if (value.hasChildren) {
-            newExpandedPaths.add(value.path);
-            if (value.children) addAllPaths(value.children);
-          }
-        });
-      };
-
-      // Añadir todas las rutas principales del mensaje
-      addAllPaths(output.values);
-
-      return {
-        ...prev,
-        expandedPaths: newExpandedPaths,
-      };
-    });
-  }, []);
-
-  // Colapsar todos los nodos de un mensaje
-  const collapseAllInOutput = useCallback((outputId: string) => {
-    if (!outputId || !isMounted.current) return;
-
-    setState((prev) => {
-      const output = prev.outputs.find((o) => o.id === outputId);
-      if (!output) return prev;
-
-      const newExpandedPaths = new Set(prev.expandedPaths);
-
-      // Eliminar todas las rutas que pertenecen a este mensaje
-      const collapse = (values: ProcessedValue[]) => {
-        values.forEach((value) => {
-          newExpandedPaths.delete(value.path);
-          if (value.children) collapse(value.children);
-        });
-      };
-      collapse(output.values);
-
-      return {
-        ...prev,
-        expandedPaths: newExpandedPaths,
-      };
-    });
-  }, []);
-
   // Limpiar referencias cuando el componente se desmonta
   useEffect(() => {
     return () => {
@@ -305,12 +227,9 @@ export function useConsole(options: UseConsoleOptions = {}) {
     addOutput,
     addProcessedOutput,
     clearConsole,
-    toggleExpand,
     setFilter,
     toggleConsole,
     selectOutput,
     setExecutingCode,
-    expandAllInOutput,
-    collapseAllInOutput,
   };
 }

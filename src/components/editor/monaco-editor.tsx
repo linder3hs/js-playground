@@ -9,10 +9,14 @@ import { FILE_BY_LANGUAGE } from "@/store/editor-store";
  * `@monaco-editor/react` carga Monaco 0.43 (septiembre 2023) por defecto, y
  * con él un TypeScript viejo: métodos como `toSorted` u `Object.groupBy` se
  * reportaban como inexistentes aunque el navegador los soporte.
+ *
+ * 0.52.2 es la última versión que publica el bundle AMD en `min/vs`, que es
+ * lo que este loader necesita. A partir de 0.53 ese archivo es un shim ESM de
+ * 2 KB y el editor nunca monta.
  */
 loader.config({
   paths: {
-    vs: "https://cdn.jsdelivr.net/npm/monaco-editor@0.56.0/min/vs",
+    vs: "https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/vs",
   },
 });
 
