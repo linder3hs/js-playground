@@ -18,7 +18,7 @@ const P = ({ children }: { children: ReactNode }) => (
   <span className="text-zinc-400 dark:text-zinc-500">{children}</span>
 );
 
-const OUTPUT = ["JS / TS", "Web", "Markdown", "JSON"];
+const OUTPUT = ["JS / TS", "Markdown", "JSON"];
 
 // Code types out first, then the console answers.
 const CODE_STEP = 0.18;
@@ -85,7 +85,7 @@ export function HeroSection() {
               >
                 {"  "}
                 <S>&quot;JS / TS&quot;</S>
-                <P>,</P> <S>&quot;Web&quot;</S>
+                <P>,</P> <S>&quot;Markdown&quot;</S>
                 <P>,</P>
               </span>
               <span
@@ -93,8 +93,7 @@ export function HeroSection() {
                 style={at(CODE_START + CODE_STEP * 2)}
               >
                 {"  "}
-                <S>&quot;Markdown&quot;</S>
-                <P>,</P> <S>&quot;JSON&quot;</S>
+                <S>&quot;JSON&quot;</S>
                 <P>,</P>
               </span>
               <span

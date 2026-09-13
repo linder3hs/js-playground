@@ -10,8 +10,8 @@ import type { Monaco, OnMount } from "@monaco-editor/react";
 
 /**
  * `monaco-editor` no está instalado como paquete (el loader lo trae por CDN),
- * así que el tipo del modelo se deriva del editor, igual que en
- * `web-playground/types.ts`.
+ * así que el tipo del modelo se deriva del editor, igual que `MonacoEditor`
+ * en `lib/types`.
  */
 export type TextModel = NonNullable<
   ReturnType<Parameters<OnMount>[0]["getModel"]>

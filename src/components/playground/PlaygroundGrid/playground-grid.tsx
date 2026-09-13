@@ -8,11 +8,6 @@ const playgrounds: PlaygroundCardProps[] = [
     link: "/playground/js-ts",
   },
   {
-    title: "Web Editor",
-    description: "HTML, CSS and JavaScript with a live preview pane.",
-    link: "/playground/web",
-  },
-  {
     title: "Markdown Editor",
     description: "Write Markdown, see it rendered side by side.",
     link: "/playground/markdown",

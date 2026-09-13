@@ -14,7 +14,7 @@ import {
   configureLanguageDefaults,
   type Problem,
 } from "@/lib/runner/compile";
-import type { MonacoEditor } from "@/web-playground/types";
+import type { MonacoEditor } from "@/lib/types";
 
 /** Pausa de tecleo antes de disparar el auto-run */
 const AUTORUN_DEBOUNCE_MS = 700;

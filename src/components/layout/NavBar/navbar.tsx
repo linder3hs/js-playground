@@ -4,7 +4,6 @@ import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 const navLinks = [
   { name: "JS / TS", href: "/playground/js-ts" },
-  { name: "Web", href: "/playground/web" },
   { name: "Markdown", href: "/playground/markdown" },
   { name: "JSON", href: "/playground/json" },
 ];

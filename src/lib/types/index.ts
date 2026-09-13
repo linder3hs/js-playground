@@ -1,3 +1,5 @@
+import type { OnMount } from "@monaco-editor/react";
+
 export interface EditorConfig {
   theme: string;
   fontSize: number;
@@ -49,18 +51,8 @@ export interface WorkspaceSettings {
 
 export type ActivePanel = "editor" | "console" | "both";
 
-export type FileType = "html" | "css" | "javascript";
-
-export interface WebPlaygroundFile {
-  id: string;
-  type: FileType;
-  content: string;
-}
-
-export interface WebPlaygroundState {
-  files: {
-    html: WebPlaygroundFile;
-    css: WebPlaygroundFile;
-    javascript: WebPlaygroundFile;
-  };
-}
+/**
+ * `monaco-editor` no está instalado como paquete (el loader lo trae por CDN),
+ * así que el tipo del editor se deriva del handler de montaje.
+ */
+export type MonacoEditor = Parameters<OnMount>[0];

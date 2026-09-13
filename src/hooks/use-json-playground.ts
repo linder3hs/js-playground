@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Monaco } from "@monaco-editor/react";
-import { MonacoEditor } from "@/web-playground/types";
+import { MonacoEditor } from "@/lib/types";
 import {
   JSONNode,
   buildJSONTree,
