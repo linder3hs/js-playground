@@ -1,226 +1,163 @@
 "use client";
 
-import {
-  XCircle,
-  Filter,
-  AlertTriangle,
-  AlertCircle,
-  Info,
-  MessageCircle,
-  Bug,
-  ChevronDown,
-  ChevronUp,
-} from "lucide-react";
+import { AlertCircle, AlertTriangle, Trash2 } from "lucide-react";
+import { useEffect, useRef } from "react";
 import { ConsoleOutput } from "../ConsoleOutput";
 import { ConsoleOutput as IConsoleOutput, ConsoleOutputType } from "../types";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useEffect, useRef } from "react";
 
 interface ConsolePanelProps {
+  /** Ya filtradas: es lo que se pinta */
   outputs: IConsoleOutput[];
+  /** Sin filtrar: los contadores deben seguir visibles con un filtro activo */
+  allOutputs: IConsoleOutput[];
   expandedPaths: Set<string>;
   selectedOutput: string | null;
   filter: ConsoleOutputType | "all";
-  isOpen: boolean;
   executingCode: boolean;
+  autoRun: boolean;
   onClear: () => void;
   onToggleExpand: (path: string) => void;
   onSetFilter: (filter: ConsoleOutputType | "all") => void;
-  onToggleConsole: () => void;
   onSelectOutput: (id: string | null) => void;
-  onExpandAll: (id: string) => void;
-  onCollapseAll: (id: string) => void;
   className?: string;
+}
+
+/**
+ * Contadores de error y warning. Son el único filtro: el resto de los niveles
+ * no justificaba un chip permanente en cero.
+ */
+function CountChip({
+  count,
+  active,
+  label,
+  icon,
+  onClick,
+}: {
+  count: number;
+  active: boolean;
+  label: string;
+  icon: React.ReactNode;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      title={active ? `Show everything` : `Show only ${label}`}
+      className={cn(
+        "inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] tabular-nums transition-colors",
+        active
+          ? "bg-zinc-200 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100"
+          : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+      )}
+    >
+      {icon}
+      {count}
+    </button>
+  );
 }
 
 export function ConsolePanel({
   outputs,
+  allOutputs,
   expandedPaths,
   selectedOutput,
   filter,
-  isOpen,
   executingCode,
+  autoRun,
   onClear,
   onToggleExpand,
   onSetFilter,
-  onToggleConsole,
   onSelectOutput,
-  onExpandAll,
-  onCollapseAll,
   className,
 }: ConsolePanelProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Desplazarse hacia abajo cuando se añaden nuevos mensajes
+  // Lo nuevo va abajo, como cualquier consola, y la vista lo sigue.
   useEffect(() => {
-    if (containerRef.current && isOpen) {
-      containerRef.current.scrollTop = 0; // Scroll to top (messages are in reverse order)
-    }
-  }, [outputs.length, isOpen]);
+    const container = containerRef.current;
+    if (container) container.scrollTop = container.scrollHeight;
+  }, [outputs.length]);
 
-  // Contar tipos de mensajes
-  const counts = {
-    all: outputs.length,
-    error: outputs.filter((o) => o.type === "error").length,
-    warn: outputs.filter((o) => o.type === "warn").length,
-    info: outputs.filter((o) => o.type === "info").length,
-    log: outputs.filter((o) => o.type === "log").length,
-    debug: outputs.filter((o) => o.type === "debug").length,
-  };
+  const errors = allOutputs.filter((o) => o.type === "error").length;
+  const warnings = allOutputs.filter((o) => o.type === "warn").length;
 
-  // Funciones para filtros
-  const handleFilter = (newFilter: ConsoleOutputType | "all") => {
-    onSetFilter(newFilter);
-  };
+  const toggleFilter = (type: ConsoleOutputType) =>
+    onSetFilter(filter === type ? "all" : type);
 
-  // Componentes de filtro
-  const FilterButton = ({
-    type,
-    icon,
-    label,
-  }: {
-    type: ConsoleOutputType | "all";
-    icon: React.ReactNode;
-    label: string;
-  }) => {
-    const count = counts[type];
-    const isActive = filter === type;
-
-    return (
-      <Button
-        variant="ghost"
-        size="sm"
-        className={cn(
-          "flex items-center gap-1 text-xs rounded-sm px-2 py-1 h-6",
-          isActive ? "bg-gray-700" : "hover:bg-gray-800"
-        )}
-        onClick={() => handleFilter(type)}
-        title={label}
-        disabled={count === 0}
-      >
-        {icon}
-        <span className={count === 0 ? "text-gray-600" : undefined}>
-          {count}
-        </span>
-      </Button>
-    );
-  };
+  // Del más viejo al más nuevo: `outputs` llega al revés.
+  const ordered = [...outputs].reverse();
 
   return (
-    <div
-      className={cn(
-        "flex flex-col bg-gray-900 border-t border-gray-700",
-        className,
-        isOpen ? "h-64" : "h-9"
-      )}
-    >
-      {/* Console header */}
-      <div className="flex items-center justify-between px-3 py-1 border-b border-gray-700 bg-gray-800">
-        <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="p-1 h-6 w-6"
-            onClick={onToggleConsole}
-          >
-            {isOpen ? (
-              <ChevronDown className="w-4 h-4" />
-            ) : (
-              <ChevronUp className="w-4 h-4" />
-            )}
-          </Button>
-
-          <h3 className="text-sm font-medium text-gray-200">Console</h3>
+    <div className={cn("flex flex-col bg-white dark:bg-[#0A0A0B]", className)}>
+      <div className="flex h-9 shrink-0 items-center justify-between border-b border-zinc-200 px-3 dark:border-zinc-800">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-medium text-zinc-900 dark:text-zinc-100">
+            Console
+          </span>
 
           {executingCode && (
-            <div className="ml-2 flex items-center">
-              <div className="animate-pulse w-2 h-2 rounded-full bg-green-500 mr-1"></div>
-              <span className="text-xs text-gray-400">Running...</span>
-            </div>
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-orange-500" />
+          )}
+
+          {(errors > 0 || filter === "error") && (
+            <CountChip
+              count={errors}
+              active={filter === "error"}
+              label="errors"
+              icon={<AlertCircle className="h-3 w-3 text-red-500" />}
+              onClick={() => toggleFilter("error")}
+            />
+          )}
+
+          {(warnings > 0 || filter === "warn") && (
+            <CountChip
+              count={warnings}
+              active={filter === "warn"}
+              label="warnings"
+              icon={<AlertTriangle className="h-3 w-3 text-amber-500" />}
+              onClick={() => toggleFilter("warn")}
+            />
           )}
         </div>
 
-        {isOpen && (
-          <div className="flex items-center gap-1">
-            {/* Filter toggles */}
-            <div className="flex items-center gap-0.5 mr-2 bg-gray-900 rounded-sm p-0.5">
-              <FilterButton
-                type="all"
-                icon={<Filter className="w-3 h-3" />}
-                label="All messages"
-              />
-              <FilterButton
-                type="error"
-                icon={<AlertCircle className="w-3 h-3 text-red-500" />}
-                label="Errors"
-              />
-              <FilterButton
-                type="warn"
-                icon={<AlertTriangle className="w-3 h-3 text-yellow-500" />}
-                label="Warnings"
-              />
-              <FilterButton
-                type="info"
-                icon={<Info className="w-3 h-3 text-blue-500" />}
-                label="Info"
-              />
-              <FilterButton
-                type="log"
-                icon={<MessageCircle className="w-3 h-3 text-gray-400" />}
-                label="Logs"
-              />
-              <FilterButton
-                type="debug"
-                icon={<Bug className="w-3 h-3 text-purple-400" />}
-                label="Debug"
-              />
-            </div>
-
-            {/* Clear button */}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="p-1 h-6 w-6 text-gray-400 hover:text-gray-200"
-              onClick={onClear}
-              title="Clear console"
-            >
-              <XCircle className="w-4 h-4" />
-            </Button>
-          </div>
+        {allOutputs.length > 0 && (
+          <button
+            type="button"
+            onClick={onClear}
+            title="Clear console"
+            className="inline-flex h-6 w-6 items-center justify-center rounded text-zinc-500 transition-colors hover:text-zinc-900 dark:hover:text-zinc-100"
+          >
+            <Trash2 className="h-3.5 w-3.5" aria-hidden />
+            <span className="sr-only">Clear console</span>
+          </button>
         )}
       </div>
 
-      {/* Console content */}
-      {isOpen && (
-        <div
-          ref={containerRef}
-          className="flex-1 overflow-y-auto overflow-x-hidden"
-        >
-          {outputs.length === 0 ? (
-            <div className="flex items-center justify-center h-full text-gray-500 text-sm">
-              Console is empty
-            </div>
-          ) : (
-            <div className="flex flex-col-reverse">
-              {" "}
-              {/* Reverse order, newest first */}
-              {outputs.map((output) => (
-                <ConsoleOutput
-                  key={output.id}
-                  output={output}
-                  expandedPaths={expandedPaths}
-                  onToggleExpand={onToggleExpand}
-                  isSelected={output.id === selectedOutput}
-                  onSelect={onSelectOutput}
-                  onExpandAll={onExpandAll}
-                  onCollapseAll={onCollapseAll}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+      <div ref={containerRef} className="flex-1 overflow-y-auto">
+        {ordered.length === 0 ? (
+          <p className="px-3 py-3 text-xs text-zinc-500">
+            {allOutputs.length > 0
+              ? `Nothing matches this filter.`
+              : autoRun
+                ? "Output appears as you type."
+                : "Press Run to see output."}
+          </p>
+        ) : (
+          ordered.map((output) => (
+            <ConsoleOutput
+              key={output.id}
+              output={output}
+              expandedPaths={expandedPaths}
+              onToggleExpand={onToggleExpand}
+              isSelected={output.id === selectedOutput}
+              onSelect={onSelectOutput}
+            />
+          ))
+        )}
+      </div>
     </div>
   );
 }

@@ -17,11 +17,7 @@ export default function Home() {
     };
   }, []);
 
-  return (
-    <main className={`min-h-screen bg-background flex flex-col`}>
-      <div className="flex-1 overflow-hidden">
-        <Workspace />
-      </div>
-    </main>
-  );
+  // Workspace ya ocupa la altura completa; envolverlo en otro min-h-screen
+  // sumaba una franja muerta al pie.
+  return <Workspace />;
 }

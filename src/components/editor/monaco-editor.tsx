@@ -1,66 +1,100 @@
-import { useRef } from "react";
-import { Editor, OnMount } from "@monaco-editor/react";
-import { useEditorStore } from "@/store/editor-store";
+"use client";
 
-type MonacoEditor = Parameters<OnMount>[0];
-type MonacoInstance = Parameters<OnMount>[1];
+import { Editor, type BeforeMount, type OnMount } from "@monaco-editor/react";
+import type { EditorConfig } from "@/lib/types";
+import type { PlaygroundLanguage } from "@/store/editor-store";
+import { FILE_BY_LANGUAGE } from "@/store/editor-store";
 
-export const MonacoEditor = () => {
-  const { files, currentFile, updateFile, config } = useEditorStore();
-  const editorRef = useRef<MonacoEditor | null>(null);
-  const monacoRef = useRef<MonacoInstance | null>(null);
-
-  const configureTypeDefinitions = (monaco: MonacoInstance) => {
-    monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
-      target: monaco.languages.typescript.ScriptTarget.ESNext,
-      allowNonTsExtensions: true,
-      moduleResolution: monaco.languages.typescript.ModuleResolutionKind.NodeJs,
-      module: monaco.languages.typescript.ModuleKind.CommonJS,
-      noEmit: true,
-    });
-
-    monaco.languages.typescript.javascriptDefaults.addExtraLib(
-      `
-      interface Console {
-        log(...data: unknown[]): void;
-        error(...data: unknown[]): void;
-        warn(...data: unknown[]): void;
-        info(...data: unknown[]): void;
-      }
-      declare const console: Console;
-      `,
-      "ts:console.d.ts"
-    );
-  };
-
-  const handleEditorDidMount: OnMount = (editor, monaco) => {
-    editorRef.current = editor;
-    monacoRef.current = monaco;
-    configureTypeDefinitions(monaco);
-  };
-
-  return (
-    <Editor
-      height="100%"
-      defaultLanguage="javascript"
-      theme={config.theme}
-      value={files[currentFile]}
-      onChange={(value: string | undefined) =>
-        updateFile(currentFile, value ?? "")
-      }
-      onMount={handleEditorDidMount}
-      options={{
-        ...config,
-        automaticLayout: true,
-        minimap: { enabled: config.minimap },
-        fontSize: config.fontSize,
-        lineNumbers: config.lineNumbers,
-        wordWrap: config.wordWrap,
-        tabSize: config.tabSize,
-        scrollBeyondLastLine: false,
-        formatOnPaste: true,
-        formatOnType: true,
-      }}
-    />
-  );
+/**
+ * Temas alineados con el fondo del sitio, para que el editor no quede como un
+ * recuadro pegado encima de la página.
+ *
+ * Se aplican por la prop `theme` del componente, no con `monaco.editor
+ * .setTheme()`: la librería reaplica su prop después del mount y pisaría
+ * cualquier llamada manual.
+ */
+const THEMES = {
+  dark: {
+    name: "playground-dark",
+    base: "vs-dark" as const,
+    colors: {
+      "editor.background": "#0A0A0B",
+      "editorGutter.background": "#0A0A0B",
+      "editor.lineHighlightBackground": "#18181B",
+      "editorLineNumber.foreground": "#52525B",
+    },
+  },
+  light: {
+    name: "playground-light",
+    base: "vs" as const,
+    colors: {
+      "editor.background": "#FFFFFF",
+      "editorGutter.background": "#FFFFFF",
+      "editor.lineHighlightBackground": "#F4F4F5",
+      "editorLineNumber.foreground": "#A1A1AA",
+    },
+  },
 };
+
+const defineThemes: BeforeMount = (monaco) => {
+  for (const theme of Object.values(THEMES)) {
+    monaco.editor.defineTheme(theme.name, {
+      base: theme.base,
+      inherit: true,
+      rules: [],
+      colors: theme.colors,
+    });
+  }
+};
+
+interface MonacoEditorProps {
+  value: string;
+  language: PlaygroundLanguage;
+  config: EditorConfig;
+  theme: "light" | "dark";
+  onChange: (value: string | undefined) => void;
+  onMount: OnMount;
+}
+
+/**
+ * Editor presentacional: todo el estado y la configuración de lenguaje viven
+ * en `use-editor`. Antes este componente leía el store por su cuenta e
+ * ignoraba al hook, lo que dejaba el atajo Ctrl+Enter sin efecto.
+ *
+ * `path` importa: le da al modelo una URI con extensión, y sin eso el worker
+ * de TypeScript no transpila ni reporta diagnósticos.
+ */
+export const MonacoEditor = ({
+  value,
+  language,
+  config,
+  theme,
+  onChange,
+  onMount,
+}: MonacoEditorProps) => (
+  <Editor
+    height="100%"
+    language={language}
+    theme={THEMES[theme].name}
+    beforeMount={defineThemes}
+    path={`file:///${FILE_BY_LANGUAGE[language]}`}
+    value={value}
+    onChange={onChange}
+    onMount={onMount}
+    options={{
+      automaticLayout: true,
+      minimap: { enabled: config.minimap },
+      fontSize: config.fontSize,
+      lineNumbers: config.lineNumbers,
+      wordWrap: config.wordWrap,
+      tabSize: config.tabSize,
+      scrollBeyondLastLine: false,
+      formatOnPaste: true,
+      formatOnType: true,
+      // Autocompletado agresivo: es un playground, no un IDE con ruido.
+      quickSuggestions: true,
+      suggestOnTriggerCharacters: true,
+      tabCompletion: "on",
+    }}
+  />
+);

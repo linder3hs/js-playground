@@ -9,9 +9,21 @@ import {
   ActivePanel,
 } from "@/lib/types";
 
+export type PlaygroundLanguage = "javascript" | "typescript";
+
+/** El lenguaje se deriva de la extensión del archivo activo */
+export const FILE_BY_LANGUAGE: Record<PlaygroundLanguage, string> = {
+  javascript: "index.js",
+  typescript: "index.ts",
+};
+
 interface EditorStore extends WorkspaceState {
   config: EditorConfig;
   output: ConsoleOutput[];
+  /** Ejecutar solo al dejar de escribir, sin tocar Run */
+  autoRun: boolean;
+  setAutoRun: (autoRun: boolean) => void;
+  setLanguage: (language: PlaygroundLanguage) => void;
   setOrientation: (orientation: LayoutOrientation) => void;
   setActivePanel: (panel: ActivePanel) => void;
   updateFile: (filename: string, content: string) => void;
@@ -33,6 +45,10 @@ const DEFAULT_WORKSPACE_STATE: WorkspaceState = {
   currentFile: "index.js",
   files: {
     "index.js": '// Welcome to JS Playground\nconsole.log("Hello World!");',
+    "index.ts": `// Welcome to JS Playground — TypeScript mode
+const greet = (name: string): string => \`Hello \${name}!\`;
+
+console.log(greet("World"));`,
   },
   activePanel: "both",
   orientation: "horizontal",
@@ -44,6 +60,12 @@ export const useEditorStore = create<EditorStore>()(
       ...DEFAULT_WORKSPACE_STATE,
       config: DEFAULT_CONFIG,
       output: [],
+      autoRun: true,
+
+      setAutoRun: (autoRun) => set({ autoRun }),
+
+      setLanguage: (language) =>
+        set({ currentFile: FILE_BY_LANGUAGE[language] }),
 
       setOrientation: (orientation) => set({ orientation }),
 
@@ -68,8 +90,20 @@ export const useEditorStore = create<EditorStore>()(
     }),
     {
       name: "js-playground-storage",
+      // Sin esto, un storage viejo (sólo index.js) dejaría el modo TypeScript
+      // sin archivo al cargar.
+      merge: (persisted, current) => {
+        const saved = (persisted ?? {}) as Partial<EditorStore>;
+        return {
+          ...current,
+          ...saved,
+          files: { ...current.files, ...(saved.files ?? {}) },
+        };
+      },
       partialize: (state) => ({
         files: state.files,
+        currentFile: state.currentFile,
+        autoRun: state.autoRun,
         config: state.config,
         orientation: state.orientation,
         activePanel: state.activePanel,

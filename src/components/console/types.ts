@@ -57,6 +57,12 @@ export interface ProcessedValue {
   key?: string | number;
   id?: string;
   isExpanded?: boolean;
+  /**
+   * Hijos ya serializados. El runner corre en un Web Worker: del lado de la
+   * página no existe el objeto original, así que el árbol viaja completo en
+   * lugar de calcularse al expandir.
+   */
+  children?: ProcessedValue[];
 }
 
 export interface ConsoleOutput {

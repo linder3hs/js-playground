@@ -139,6 +139,34 @@ export function useConsole(options: UseConsoleOptions = {}) {
     [maxOutputs]
   );
 
+  /**
+   * Añade una entrada cuyos valores ya vienen serializados desde el worker de
+   * ejecución. `addOutput` sigue existiendo para valores vivos del hilo
+   * principal (errores del propio runner).
+   */
+  const addProcessedOutput = useCallback(
+    (type: ConsoleOutputType, values: ProcessedValue[], stack?: string) => {
+      if (!isMounted.current) return;
+
+      setState((prev) => {
+        const newOutput: ConsoleOutput = {
+          id: generateId(),
+          type,
+          timestamp: Date.now(),
+          values,
+          rawValues: [],
+          stack,
+        };
+
+        return {
+          ...prev,
+          outputs: [newOutput, ...prev.outputs].slice(0, maxOutputs),
+        };
+      });
+    },
+    [maxOutputs]
+  );
+
   // Alternar la expansión de un nodo
   const toggleExpand = useCallback((path: string) => {
     if (!path || !isMounted.current) return;
@@ -218,11 +246,12 @@ export function useConsole(options: UseConsoleOptions = {}) {
 
       const newExpandedPaths = new Set(prev.expandedPaths);
 
-      // Función recursiva para añadir todas las rutas
+      // Recorre el árbol completo: los hijos ya vienen serializados.
       const addAllPaths = (values: ProcessedValue[]) => {
         values.forEach((value) => {
           if (value.hasChildren) {
             newExpandedPaths.add(value.path);
+            if (value.children) addAllPaths(value.children);
           }
         });
       };
@@ -248,18 +277,13 @@ export function useConsole(options: UseConsoleOptions = {}) {
       const newExpandedPaths = new Set(prev.expandedPaths);
 
       // Eliminar todas las rutas que pertenecen a este mensaje
-      output.values.forEach((value) => {
-        // Extraer la parte raíz de la ruta
-        const pathParts = value.path.split("[");
-        const pathPrefix = pathParts[0];
-
-        // Eliminar todas las rutas que comienzan con este prefijo
-        newExpandedPaths.forEach((path) => {
-          if (path.startsWith(pathPrefix)) {
-            newExpandedPaths.delete(path);
-          }
+      const collapse = (values: ProcessedValue[]) => {
+        values.forEach((value) => {
+          newExpandedPaths.delete(value.path);
+          if (value.children) collapse(value.children);
         });
-      });
+      };
+      collapse(output.values);
 
       return {
         ...prev,
@@ -279,6 +303,7 @@ export function useConsole(options: UseConsoleOptions = {}) {
     consoleState: state,
     filteredOutputs: getFilteredOutputs(),
     addOutput,
+    addProcessedOutput,
     clearConsole,
     toggleExpand,
     setFilter,

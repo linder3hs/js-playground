@@ -1,32 +1,23 @@
-import { useState, useEffect, useCallback } from "react";
-import { useEditorStore } from "@/store/editor-store";
-import { executeCode } from "@/lib/utils/code-executor";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useTheme } from "next-themes";
+import type { Monaco } from "@monaco-editor/react";
+import {
+  FILE_BY_LANGUAGE,
+  useEditorStore,
+  type PlaygroundLanguage,
+} from "@/store/editor-store";
 import { useConsole } from "@/hooks/use-console";
-import { ConsoleOutputType } from "@/components/console/types";
-import { Monaco } from "@monaco-editor/react";
-import { MonacoEditor } from "@/web-playground/types";
+import { CodeRunner } from "@/lib/runner/client";
+import type { RunnerEvent } from "@/lib/runner/protocol";
+import {
+  compileModel,
+  configureLanguageDefaults,
+  type Problem,
+} from "@/lib/runner/compile";
+import type { MonacoEditor } from "@/web-playground/types";
 
-export type ConsoleFunction = (...args: unknown[]) => unknown;
-
-export type ConsoleValue =
-  | string
-  | number
-  | boolean
-  | bigint
-  | symbol
-  | null
-  | undefined
-  | ConsoleFunction
-  | Date
-  | RegExp
-  | Error
-  | Promise<unknown>
-  | Map<unknown, unknown>
-  | Set<unknown>
-  | Array<unknown>
-  | Record<string, unknown>
-  | object
-  | unknown;
+/** Pausa de tecleo antes de disparar el auto-run */
+const AUTORUN_DEBOUNCE_MS = 700;
 
 export function useEditor() {
   const {
@@ -35,180 +26,216 @@ export function useEditor() {
     updateFile,
     config,
     orientation,
-    activePanel,
+    autoRun,
+    setAutoRun,
+    setLanguage: setStoreLanguage,
     setOrientation,
-    setActivePanel,
-    updateConfig,
   } = useEditorStore();
 
+  const language: PlaygroundLanguage =
+    currentFile === FILE_BY_LANGUAGE.typescript ? "typescript" : "javascript";
+  const code = files[currentFile] ?? "";
+
+  const { resolvedTheme } = useTheme();
   const [isExecuting, setIsExecuting] = useState(false);
-  const [monacoEditor, setMonacoEditor] = useState<MonacoEditor | null>(null);
-  const [monacoInstance, setMonacoInstance] = useState<Monaco | null>(null);
+  /** Monaco carga por CDN: hasta que monta no hay modelo que compilar */
+  const [isEditorReady, setIsEditorReady] = useState(false);
+  const [problems, setProblems] = useState<Problem[]>([]);
+
+  const editorRef = useRef<MonacoEditor | null>(null);
+  const monacoRef = useRef<Monaco | null>(null);
+  const runnerRef = useRef<CodeRunner | null>(null);
 
   const {
     consoleState,
     filteredOutputs,
-    addOutput,
+    addProcessedOutput,
     clearConsole,
     toggleExpand,
     setFilter,
-    toggleConsole,
     selectOutput,
     setExecutingCode,
-    expandAllInOutput,
-    collapseAllInOutput,
   } = useConsole({ initiallyOpen: true });
 
-  const runCode = useCallback(async () => {
-    const code = files[currentFile];
-    if (!code.trim()) return;
-
-    setIsExecuting(true);
-    setExecutingCode(true);
-    clearConsole();
-
-    try {
-      await executeCode(
-        code,
-        (type: ConsoleOutputType, args: any[], stack?: string) => {
-          addOutput(type, args, stack);
-        }
-      );
-    } catch (error) {
-      console.error(
-        "Error executing code:",
-        error instanceof Error ? error.message : "Unknown error"
-      );
-    } finally {
-      setIsExecuting(false);
-      setExecutingCode(false);
+  // Handlers en refs: el worker vive más que cualquier render.
+  const handleRunnerEvent = useRef<(event: RunnerEvent) => void>(() => {});
+  handleRunnerEvent.current = (event: RunnerEvent) => {
+    switch (event.type) {
+      case "console":
+        addProcessedOutput(event.level, event.values, event.stack);
+        break;
+      case "done":
+        setIsExecuting(false);
+        setExecutingCode(false);
+        break;
+      case "crash":
+        addProcessedOutput(
+          "error",
+          [
+            {
+              type: "error",
+              value: event.message,
+              preview: event.message,
+              hasChildren: false,
+              depth: 0,
+              path: `crash_${Date.now()}`,
+              id: `crash_${Date.now()}`,
+            },
+          ],
+          event.stack
+        );
+        setIsExecuting(false);
+        setExecutingCode(false);
+        break;
     }
-  }, [files, currentFile, addOutput, clearConsole, setExecutingCode]);
+  };
+
+  const getRunner = useCallback(() => {
+    if (!runnerRef.current) {
+      runnerRef.current = new CodeRunner((event) =>
+        handleRunnerEvent.current(event)
+      );
+    }
+    return runnerRef.current;
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      runnerRef.current?.dispose();
+      runnerRef.current = null;
+    };
+  }, []);
+
+  /**
+   * Compila y ejecuta el modelo actual.
+   *
+   * @param silent true para el auto-run: con errores simplemente no ejecuta,
+   * en lugar de escribir en la consola en cada tecla.
+   */
+  const execute = useCallback(
+    async (silent: boolean) => {
+      const monaco = monacoRef.current;
+      const model = editorRef.current?.getModel();
+      if (!monaco || !model) return;
+      if (!model.getValue().trim()) {
+        setProblems([]);
+        return;
+      }
+
+      let result;
+      try {
+        result = await compileModel(monaco, model);
+      } catch {
+        // El worker de TS todavía no está listo: el próximo tecleo reintenta.
+        return;
+      }
+
+      setProblems(result.problems);
+
+      if (result.blocking.length > 0 || !result.js) {
+        if (!silent) {
+          const first = result.blocking[0];
+          const message = first
+            ? `${first.message} (line ${first.line})`
+            : "Nothing to run";
+          addProcessedOutput("error", [
+            {
+              type: "error",
+              value: message,
+              preview: message,
+              hasChildren: false,
+              depth: 0,
+              path: `compile_${Date.now()}`,
+              id: `compile_${Date.now()}`,
+            },
+          ]);
+        }
+        return;
+      }
+
+      clearConsole();
+      setIsExecuting(true);
+      setExecutingCode(true);
+      getRunner().run(result.js);
+    },
+    [addProcessedOutput, clearConsole, getRunner, setExecutingCode]
+  );
+
+  // Ref estable para el atajo de teclado, que se registra una sola vez.
+  const executeRef = useRef(execute);
+  executeRef.current = execute;
+
+  const runCode = useCallback(() => executeRef.current(false), []);
+
+  // Auto-run: una ejecución por pausa de tecleo, no una por tecla.
+  // `isEditorReady` en las dependencias es lo que dispara la primera ejecución:
+  // al montar, el debounce vence antes de que exista el modelo.
+  useEffect(() => {
+    if (!autoRun || !isEditorReady) return;
+    const timer = setTimeout(() => {
+      void executeRef.current(true);
+    }, AUTORUN_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [code, language, autoRun, isEditorReady]);
 
   const handleEditorDidMount = useCallback(
     (editor: MonacoEditor, monaco: Monaco) => {
-      setMonacoEditor(editor);
-      setMonacoInstance(monaco);
+      editorRef.current = editor;
+      monacoRef.current = monaco;
 
-      monaco.editor.defineTheme("js-playground", {
-        base: "vs-dark",
-        inherit: true,
-        rules: [],
-        colors: {
-          "editor.background": "#1E1E1E",
-          "editor.foreground": "#D4D4D4",
-        },
-      });
+      configureLanguageDefaults(monaco);
+      setIsEditorReady(true);
 
-      monaco.editor.setTheme("js-playground");
-
-      // Configurar atajos de teclado
       editor.addAction({
         id: "run-code",
         label: "Run Code",
         keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter],
-        run: runCode,
+        run: () => {
+          void executeRef.current(false);
+        },
       });
-
-      // Añadir tipos para console con tipos específicos en lugar de any
-      monaco.languages.typescript.javascriptDefaults.addExtraLib(
-        `
-      /**
-       * Type for values that can be logged to the console
-       */
-      type ConsoleValue = string | number | boolean | null | undefined | object;
-
-      /**
-       * Console interface with proper types
-       */
-      interface Console {
-        /**
-         * Log information to the console
-         * @param data - Values to be logged
-         */
-        log(...data: ConsoleValue[]): void;
-        
-        /**
-         * Log error information to the console
-         * @param data - Values to be logged
-         */
-        error(...data: ConsoleValue[]): void;
-        
-        /**
-         * Log warning information to the console
-         * @param data - Values to be logged
-         */
-        warn(...data: ConsoleValue[]): void;
-        
-        /**
-         * Log information messages to the console
-         * @param data - Values to be logged
-         */
-        info(...data: ConsoleValue[]): void;
-        
-        /**
-         * Log debug information to the console
-         * @param data - Values to be logged
-         */
-        debug(...data: ConsoleValue[]): void;
-      }
-      
-      /**
-       * Global console object
-       */
-      declare const console: Console;
-    `,
-        "console.d.ts"
-      );
     },
-    [runCode]
+    []
   );
 
-  // Actualizar el archivo actual
   const handleEditorChange = useCallback(
     (value: string | undefined) => {
-      if (value !== undefined) {
-        updateFile(currentFile, value);
-      }
+      updateFile(currentFile, value ?? "");
     },
     [currentFile, updateFile]
   );
 
-  // Ejecutar código al iniciar si está vacío
-  useEffect(() => {
-    // Si no hay mensajes en la consola y tenemos código inicial, ejecutarlo
-    if (filteredOutputs.length === 0 && files[currentFile]?.trim()) {
-      runCode();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const setLanguage = useCallback(
+    (next: PlaygroundLanguage) => {
+      setStoreLanguage(next);
+      setProblems([]);
+    },
+    [setStoreLanguage]
+  );
 
   return {
-    files,
-    currentFile,
-    orientation,
-    activePanel,
+    code,
     config,
+    /** El editor sigue al tema del sitio (el navbar tiene el toggle) */
+    editorTheme: (resolvedTheme === "light" ? "light" : "dark") as
+      | "light"
+      | "dark",
+    language,
+    orientation,
+    autoRun,
     isExecuting,
-    monacoEditor,
-    monacoInstance,
-    // Consola
+    problems,
     consoleState,
     consoleOutputs: filteredOutputs,
-    // Métodos
     updateFile: handleEditorChange,
     runCode,
-    clearConsole,
+    setLanguage,
+    setAutoRun,
     setOrientation,
-    setActivePanel,
-    updateConfig,
+    clearConsole,
     handleEditorDidMount,
-    // Métodos de consola
     toggleConsoleExpand: toggleExpand,
     setConsoleFilter: setFilter,
-    toggleConsolePanel: toggleConsole,
     selectConsoleOutput: selectOutput,
-    expandAllInOutput,
-    collapseAllInOutput,
   };
 }
