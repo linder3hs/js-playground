@@ -1,45 +1,27 @@
-// src/components/ui/theme-toggle.tsx
 "use client";
 
-import { motion } from "framer-motion";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 import { Sun, Moon } from "lucide-react";
 
 export function ThemeToggle() {
   const [mounted, setMounted] = useState(false);
-  const { theme, setTheme } = useTheme();
+  const { resolvedTheme, setTheme } = useTheme();
 
-  // After mounting, we can safely access the theme
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  useEffect(() => setMounted(true), []);
 
-  if (!mounted) return null;
+  // ponytail: fixed-size placeholder keeps the navbar from shifting pre-hydration
+  if (!mounted) return <div className="h-8 w-8" />;
 
-  const toggleTheme = () => {
-    setTheme(theme === "dark" ? "light" : "dark");
-  };
+  const isDark = resolvedTheme === "dark";
 
   return (
-    <motion.button
-      className="p-3 rounded-full bg-white/10 backdrop-blur-lg border border-gray-200 dark:border-gray-800 shadow-lg"
-      onClick={toggleTheme}
-      whileHover={{ scale: 1.1 }}
-      whileTap={{ scale: 0.9 }}
-      transition={{ type: "spring", stiffness: 400, damping: 17 }}
+    <button
+      onClick={() => setTheme(isDark ? "light" : "dark")}
+      aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
+      className="rounded-md p-2 text-zinc-600 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
     >
-      <motion.div
-        initial={false}
-        animate={{ rotateY: theme === "dark" ? 0 : 180 }}
-        transition={{ duration: 0.5 }}
-      >
-        {theme === "dark" ? (
-          <Sun className="w-5 h-5 text-yellow-500" />
-        ) : (
-          <Moon className="w-5 h-5 text-blue-600" />
-        )}
-      </motion.div>
-    </motion.button>
+      {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+    </button>
   );
 }

@@ -2,6 +2,19 @@ import "./globals.css";
 import type { Metadata } from "next";
 import { Providers } from "./providers"
 import Script from "next/script";
+import localFont from "next/font/local";
+
+const geistSans = localFont({
+  src: "./fonts/GeistVF.woff",
+  variable: "--font-geist-sans",
+  display: "swap",
+});
+
+const geistMono = localFont({
+  src: "./fonts/GeistMonoVF.woff",
+  variable: "--font-geist-mono",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "JS Playground - Interactive JavaScript & TypeScript Code Editor",
@@ -80,7 +93,11 @@ export default function RootLayout({
 
 
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${geistSans.variable} ${geistMono.variable}`}
+    >
       <head>
         <title>
           JS Playground - Interactive JavaScript & TypeScript Code Editor
