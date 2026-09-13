@@ -1,9 +1,20 @@
 "use client";
 
-import { Editor, type BeforeMount, type OnMount } from "@monaco-editor/react";
+import { Editor, loader, type BeforeMount, type OnMount } from "@monaco-editor/react";
 import type { EditorConfig } from "@/lib/types";
 import type { PlaygroundLanguage } from "@/store/editor-store";
 import { FILE_BY_LANGUAGE } from "@/store/editor-store";
+
+/**
+ * `@monaco-editor/react` carga Monaco 0.43 (septiembre 2023) por defecto, y
+ * con él un TypeScript viejo: métodos como `toSorted` u `Object.groupBy` se
+ * reportaban como inexistentes aunque el navegador los soporte.
+ */
+loader.config({
+  paths: {
+    vs: "https://cdn.jsdelivr.net/npm/monaco-editor@0.56.0/min/vs",
+  },
+});
 
 /**
  * Temas alineados con el fondo del sitio, para que el editor no quede como un

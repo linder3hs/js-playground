@@ -126,10 +126,16 @@ export async function compileModel(
  * autocompletado de `console` no ofreciera `table`, `dir`, `time`, etc.
  */
 export function configureLanguageDefaults(monaco: Monaco): void {
-  // `lib` se deja en el default de Monaco a propósito: es lo que da el
-  // autocompletado completo del lenguaje (String, Array, Promise, console…).
+  // `lib` tiene que ir explícito: sin él TypeScript lo deriva del `target`, y
+  // con ES2020 faltaban métodos como Array.prototype.at (ES2022) o findLast
+  // (ES2023).
+  //
+  // `webworker` en lugar de `dom` porque es donde el código realmente corre:
+  // trae fetch, setTimeout, structuredClone y console, y no ofrece `document`
+  // ni `window`, que autocompletaban para después fallar en ejecución.
   const compilerOptions = {
-    target: monaco.languages.typescript.ScriptTarget.ES2020,
+    target: monaco.languages.typescript.ScriptTarget.ESNext,
+    lib: ["esnext", "webworker"],
     module: monaco.languages.typescript.ModuleKind.ESNext,
     moduleResolution: monaco.languages.typescript.ModuleResolutionKind.NodeJs,
     allowNonTsExtensions: true,
