@@ -6,7 +6,7 @@ import {
   getValueStyle,
   formatValueForDisplay,
 } from "@/lib/utils/json-formatter";
-import { RefObject } from "react";
+import type { JSX, RefObject } from "react";
 
 interface JsonTreeViewProps {
   jsonTree: JSONNode[];

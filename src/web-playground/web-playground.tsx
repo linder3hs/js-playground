@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { EditorToolbar } from "@/components/shared/EditorToolbar";
 import { useWebPlayground } from "@/hooks/use-web-playground";
+import type { JSX } from "react";
 
 export function WebPlayground(): JSX.Element {
   const {
