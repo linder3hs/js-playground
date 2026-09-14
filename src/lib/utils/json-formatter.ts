@@ -143,17 +143,17 @@ export function buildJSONTree(
  * @returns CSS class name for styling
  */
 export function getValueStyle(value: JSONValue): string {
-  if (value === null) return "text-red-400";
+  if (value === null) return "text-red-600 dark:text-red-400";
 
   switch (typeof value) {
     case "string":
-      return "text-green-400";
+      return "text-emerald-600 dark:text-emerald-400";
     case "number":
-      return "text-blue-400";
+      return "text-blue-600 dark:text-blue-400";
     case "boolean":
-      return "text-yellow-400";
+      return "text-amber-600 dark:text-amber-400";
     default:
-      return "text-gray-300";
+      return "text-zinc-600 dark:text-zinc-400";
   }
 }
 

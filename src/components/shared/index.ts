@@ -1,1 +1,1 @@
-export * from "./EditorToolbar";
+export * from "./JsonLd";

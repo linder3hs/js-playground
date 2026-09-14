@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from "react";
+import { useTheme } from "next-themes";
 import { useToast } from "@/hooks/use-toast";
 import { Monaco } from "@monaco-editor/react";
-import { MonacoEditor } from "@/lib/types";
+import { MonacoEditor, LayoutOrientation } from "@/lib/types";
 import {
   JSONNode,
   buildJSONTree,
@@ -32,7 +33,7 @@ const DEFAULT_JSON = `{
   ],
   "author": {
     "name": "JS Playground",
-    "url": "https://js-playground-alpha.vercel.app"
+    "url": "https://playground.linderhassinger.dev"
   }
 }`;
 
@@ -46,11 +47,12 @@ export function useJsonPlayground(options?: UseJsonPlaygroundOptions) {
     options?.initialJson || DEFAULT_JSON
   );
 
+  const { resolvedTheme } = useTheme();
+
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [autoUpdate, setAutoUpdate] = useState<boolean>(true);
-  const [previewLayout, setPreviewLayout] = useState<"right" | "bottom">(
-    "right"
-  );
+  const [orientation, setOrientation] =
+    useState<LayoutOrientation>("horizontal");
   const [editorFontSize] = useState<number>(14);
   const [jsonTree, setJsonTree] = useState<JSONNode[]>([]);
   const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set());
@@ -159,43 +161,21 @@ export function useJsonPlayground(options?: UseJsonPlaygroundOptions) {
     parseJson();
   };
 
-  // Configure Monaco editor
+  /**
+   * Los temas del editor son los compartidos (`defineThemes`), aplicados por
+   * la prop `theme`: este playground definía su propio `json-dark` fijo y lo
+   * forzaba con `setTheme`, que además ignoraba el modo claro del sitio.
+   */
   const editorWillMount = (monaco: Monaco) => {
-    // JSON language configuration
     monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
       validate: true,
       allowComments: false,
       schemaValidation: "warning",
       schemas: [],
     });
-
-    // Custom dark theme
-    monaco.editor.defineTheme("json-dark", {
-      base: "vs-dark",
-      inherit: true,
-      rules: [
-        { token: "string", foreground: "CE9178" },
-        { token: "number", foreground: "B5CEA8" },
-        { token: "keyword", foreground: "569CD6" },
-      ],
-      colors: {
-        "editor.background": "#1E1E1E",
-        "editor.foreground": "#D4D4D4",
-        "editorLineNumber.foreground": "#858585",
-        "editor.lineHighlightBackground": "#2D2D30",
-        "editor.selectionBackground": "#264F78",
-        "editor.inactiveSelectionBackground": "#3A3D41",
-      },
-    });
-
-    monaco.editor.setTheme("json-dark");
   };
 
-  // Handle editor mounting
   const handleEditorDidMount = (editor: MonacoEditor, monaco: Monaco) => {
-    monaco.editor.setTheme("json-dark");
-
-    // Add format action
     editor.addAction({
       id: "format-json",
       label: "Format JSON",
@@ -204,11 +184,6 @@ export function useJsonPlayground(options?: UseJsonPlaygroundOptions) {
       ],
       run: () => formatJson(),
     });
-
-    // Force redraw to apply theme correctly
-    setTimeout(() => {
-      editor.updateOptions({});
-    }, 100);
   };
 
   // Update JSON tree when input changes (if auto-update is enabled)
@@ -224,15 +199,18 @@ export function useJsonPlayground(options?: UseJsonPlaygroundOptions) {
     setJsonInput,
     isFullscreen,
     autoUpdate,
-    previewLayout,
+    orientation,
     editorFontSize,
+    editorTheme: (resolvedTheme === "light" ? "light" : "dark") as
+      | "light"
+      | "dark",
     jsonTree,
     expandedPaths,
     jsonError,
     previewRef,
     toggleFullscreen,
     setAutoUpdate,
-    setPreviewLayout,
+    setOrientation,
     downloadJson,
     copyJson,
     parseJson,

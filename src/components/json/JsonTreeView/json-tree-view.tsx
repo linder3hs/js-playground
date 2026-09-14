@@ -14,8 +14,6 @@ interface JsonTreeViewProps {
   toggleNode: (path: string) => void;
   jsonError: string | null;
   containerRef: RefObject<HTMLDivElement>;
-  autoUpdate: boolean;
-  onUpdate?: () => void;
 }
 
 export function JsonTreeView({
@@ -24,101 +22,74 @@ export function JsonTreeView({
   toggleNode,
   jsonError,
   containerRef,
-  autoUpdate,
-  onUpdate,
 }: JsonTreeViewProps) {
-  // Render a single JSON node
   const renderJsonNode = (node: JSONNode): JSX.Element => {
     const isExpanded = expandedPaths.has(node.path);
-    const hasChildren = node.children && node.children.length > 0;
-    const indent = `${node.depth * 16}px`;
-
-    // Calculate value style and display format
+    const hasChildren = !!node.children && node.children.length > 0;
     const valueStyle = getValueStyle(node.value);
-    const valueDisplay: React.ReactNode = formatValueForDisplay(node.value);
 
     return (
       <div key={node.path}>
         <div
-          className="flex items-center py-1 hover:bg-gray-800 rounded cursor-pointer"
+          className="flex items-center rounded py-0.5 hover:bg-zinc-100 dark:hover:bg-zinc-900"
           onClick={() => hasChildren && toggleNode(node.path)}
-          style={{ paddingLeft: indent }}
+          style={{
+            paddingLeft: `${node.depth * 14}px`,
+            cursor: hasChildren ? "pointer" : "default",
+          }}
         >
-          {hasChildren ? (
-            <div className="mr-1 text-gray-400">
-              {isExpanded ? (
-                <ChevronDown className="w-4 h-4" />
+          <span className="mr-1 flex h-4 w-4 shrink-0 items-center justify-center text-zinc-400 dark:text-zinc-600">
+            {hasChildren &&
+              (isExpanded ? (
+                <ChevronDown className="h-3.5 w-3.5" />
               ) : (
-                <ChevronRight className="w-4 h-4" />
-              )}
-            </div>
-          ) : (
-            <div className="w-4 mr-1"></div>
-          )}
+                <ChevronRight className="h-3.5 w-3.5" />
+              ))}
+          </span>
 
-          <div className="flex items-center">
-            <span className="text-purple-400 font-medium">
-              {JSON.stringify(node.key)}:{" "}
-            </span>
-            {!hasChildren && <span className={valueStyle}>{valueDisplay}</span>}
-            {hasChildren && (
-              <span className="text-gray-400 ml-1">
-                {node.type === "array" ? "Array" : "Object"}
-                <span className="text-gray-500 text-xs ml-1">
-                  ({node.children?.length}{" "}
-                  {node.children && node.children.length === 1
-                    ? "item"
-                    : "items"}
-                  )
-                </span>
+          <span className="text-purple-600 dark:text-purple-400">
+            {JSON.stringify(node.key)}
+          </span>
+          <span className="text-zinc-400 dark:text-zinc-600">:&nbsp;</span>
+
+          {hasChildren ? (
+            <span className="text-zinc-500">
+              {node.type === "array" ? "Array" : "Object"}
+              <span className="ml-1 text-zinc-400 dark:text-zinc-600">
+                ({node.children?.length}
+                {node.children?.length === 1 ? " item" : " items"})
               </span>
-            )}
-          </div>
+            </span>
+          ) : (
+            <span className={valueStyle}>
+              {formatValueForDisplay(node.value)}
+            </span>
+          )}
         </div>
 
         {isExpanded &&
-          hasChildren &&
           node.children?.map((child) => renderJsonNode(child))}
       </div>
     );
   };
 
-  // Empty state
-  if (jsonTree.length === 0 && !jsonError) {
+  // El error ya lo muestra la cabecera del panel; acá sólo se explica por qué
+  // el árbol quedó vacío.
+  if (jsonError || jsonTree.length === 0) {
     return (
-      <div className="text-gray-400 flex items-center justify-center h-full">
-        Enter valid JSON in the editor to see the tree view
+      <div className="flex-1 px-3 py-2 text-xs text-zinc-500">
+        {jsonError
+          ? "Fix the error to see the tree."
+          : "The tree appears as you type."}
       </div>
     );
   }
 
-  // Error state
-  if (jsonError) {
-    return (
-      <div className="text-red-400 p-4 bg-red-900/20 rounded">
-        <strong>JSON Error:</strong> {jsonError}
-      </div>
-    );
-  }
-
-  // Tree view state
   return (
     <div
       ref={containerRef}
-      className="h-full overflow-auto p-4 font-mono text-sm"
+      className="flex-1 overflow-auto px-3 py-2 font-mono text-[13px] leading-relaxed"
     >
-      {!autoUpdate && onUpdate && (
-        <div className="absolute inset-0 bg-gray-900/70 flex items-center justify-center pointer-events-none">
-          <button
-            onClick={onUpdate}
-            className="pointer-events-auto bg-gray-800 text-gray-100 hover:bg-gray-700 px-4 py-2 rounded flex items-center gap-2"
-          >
-            <ChevronRight className="w-4 h-4" />
-            Click to Update
-          </button>
-        </div>
-      )}
-
       {jsonTree.map((node) => renderJsonNode(node))}
     </div>
   );

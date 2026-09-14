@@ -2,30 +2,52 @@
 
 import { Editor } from "@monaco-editor/react";
 import {
+  AlertCircle,
+  Columns2,
+  Copy,
+  Download,
+  Maximize,
+  Minimize,
+  RefreshCw,
+  Rows2,
+  Wand2,
+} from "lucide-react";
+import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
-import { Play, Download, Copy, Maximize, Minimize } from "lucide-react";
-import { EditorToolbar } from "@/components/shared/EditorToolbar";
+import { Switch } from "@/components/ui/switch";
+import {
+  PlaygroundHeader,
+  iconButton,
+  textButton,
+} from "@/components/editor/playground-header";
+import { THEMES, defineThemes } from "@/components/editor/monaco-editor";
 import { JsonTreeView } from "@/components/json/JsonTreeView";
 import { useJsonPlayground } from "@/hooks/use-json-playground";
 
+/**
+ * Misma anatomía que JS/TS y Markdown: barra de 44px, editor y panel hermano
+ * en un `ResizablePanelGroup`, paleta zinc y naranja sólo en hover. El panel
+ * hermano acá es el árbol del JSON.
+ */
 export function JsonPlayground() {
   const {
     jsonInput,
     setJsonInput,
     isFullscreen,
     autoUpdate,
-    previewLayout,
+    orientation,
     editorFontSize,
+    editorTheme,
     jsonTree,
     expandedPaths,
     jsonError,
     previewRef,
     toggleFullscreen,
     setAutoUpdate,
-    setPreviewLayout,
+    setOrientation,
     downloadJson,
     copyJson,
     parseJson,
@@ -35,137 +57,158 @@ export function JsonPlayground() {
     handleEditorDidMount,
   } = useJsonPlayground();
 
-  // Toolbar configuration
-  const toolbarActions = [
-    {
-      id: "format",
-      label: "Format",
-      icon: <Play className="w-4 h-4 mr-2 text-gray-300" />,
-      onClick: formatJson,
-      tooltip: "Format JSON",
-    },
-    {
-      id: "download",
-      label: "Download",
-      icon: <Download className="w-4 h-4 mr-2 text-gray-300" />,
-      onClick: downloadJson,
-      tooltip: "Download as JSON file",
-    },
-    {
-      id: "copy",
-      label: "Copy",
-      icon: <Copy className="w-4 h-4 mr-2 text-gray-300" />,
-      onClick: copyJson,
-      tooltip: "Copy formatted JSON to clipboard",
-    },
-    {
-      id: "fullscreen",
-      label: "",
-      icon: isFullscreen ? (
-        <Minimize className="w-4 h-4 text-gray-300" />
-      ) : (
-        <Maximize className="w-4 h-4 text-gray-300" />
-      ),
-      onClick: toggleFullscreen,
-      tooltip: isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen",
-    },
-  ];
-
-  const toolbarToggles = [
-    {
-      id: "auto-update",
-      label: "Auto Update",
-      isChecked: autoUpdate,
-      onChange: setAutoUpdate,
-    },
-  ];
-
-  const toolbarSelects = [
-    {
-      id: "layout-select",
-      value: previewLayout,
-      onChange: (value: "right" | "bottom") => setPreviewLayout(value),
-      options: [
-        { value: "right", label: "Right" },
-        { value: "bottom", label: "Bottom" },
-      ],
-    },
-  ];
-
   return (
     <div
-      className={`${
-        isFullscreen ? "fixed inset-0 z-50 bg-gray-950" : "h-[calc(100vh-4rem)]"
+      className={`flex flex-col bg-white text-zinc-900 dark:bg-[#0A0A0B] dark:text-zinc-100 ${
+        isFullscreen ? "fixed inset-0 z-50 h-screen" : "h-screen"
       }`}
     >
-      {/* Toolbar */}
-      <EditorToolbar
-        title={{ text: "JSON Viewer/Formatter" }}
-        actions={toolbarActions}
-        toggles={toolbarToggles}
-        selects={toolbarSelects}
-        darkMode={true}
-      />
-
-      {/* Resizable panels */}
-      <ResizablePanelGroup
-        direction={previewLayout === "bottom" ? "vertical" : "horizontal"}
-        className="bg-gray-900"
+      <PlaygroundHeader
+        left={
+          <span className="rounded-md border border-zinc-200 px-2.5 py-1 text-xs font-medium text-zinc-500 dark:border-zinc-800">
+            JSON
+          </span>
+        }
       >
-        <ResizablePanel defaultSize={50}>
-          <div className="flex flex-col h-full border border-gray-700 shadow-sm bg-gray-900">
-            <div className="flex-1 overflow-hidden">
-              <Editor
-                height="100%"
-                defaultLanguage="json"
-                value={jsonInput}
-                onChange={(value) => setJsonInput(value || "")}
-                beforeMount={editorWillMount}
-                onMount={handleEditorDidMount}
-                options={{
-                  minimap: { enabled: true },
-                  fontSize: editorFontSize,
-                  lineNumbers: "on",
-                  roundedSelection: false,
-                  scrollBeyondLastLine: false,
-                  readOnly: false,
-                  theme: "json-dark",
-                  wordWrap: "on",
-                  automaticLayout: true,
-                  tabSize: 2,
-                  formatOnPaste: true,
-                  formatOnType: true,
-                }}
-              />
-            </div>
-          </div>
+        <label className="flex cursor-pointer items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
+          <Switch
+            checked={autoUpdate}
+            onCheckedChange={setAutoUpdate}
+            aria-label="Parse as you type"
+          />
+          Parse as you type
+        </label>
+
+        <button
+          type="button"
+          onClick={formatJson}
+          title="Format the JSON (Alt + Shift + F)"
+          className={textButton}
+        >
+          <Wand2 className="h-3 w-3" aria-hidden />
+          Format
+        </button>
+
+        <div className="flex items-center">
+          <button
+            type="button"
+            onClick={copyJson}
+            title="Copy the formatted JSON"
+            className={iconButton}
+          >
+            <Copy className="h-4 w-4" aria-hidden />
+            <span className="sr-only">Copy the formatted JSON</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={downloadJson}
+            title="Download as a .json file"
+            className={iconButton}
+          >
+            <Download className="h-4 w-4" aria-hidden />
+            <span className="sr-only">Download as a .json file</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() =>
+              setOrientation(
+                orientation === "horizontal" ? "vertical" : "horizontal"
+              )
+            }
+            title={
+              orientation === "horizontal"
+                ? "Stack editor and tree"
+                : "Place the tree beside the editor"
+            }
+            className={iconButton}
+          >
+            {orientation === "horizontal" ? (
+              <Rows2 className="h-4 w-4" aria-hidden />
+            ) : (
+              <Columns2 className="h-4 w-4" aria-hidden />
+            )}
+            <span className="sr-only">Switch layout</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={toggleFullscreen}
+            title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+            className={iconButton}
+          >
+            {isFullscreen ? (
+              <Minimize className="h-4 w-4" aria-hidden />
+            ) : (
+              <Maximize className="h-4 w-4" aria-hidden />
+            )}
+            <span className="sr-only">Toggle fullscreen</span>
+          </button>
+        </div>
+      </PlaygroundHeader>
+
+      <ResizablePanelGroup direction={orientation} className="flex-1">
+        <ResizablePanel defaultSize={50} minSize={25}>
+          <Editor
+            height="100%"
+            language="json"
+            theme={THEMES[editorTheme].name}
+            beforeMount={(monaco) => {
+              defineThemes(monaco);
+              editorWillMount(monaco);
+            }}
+            value={jsonInput}
+            onChange={(value) => setJsonInput(value || "")}
+            onMount={handleEditorDidMount}
+            options={{
+              automaticLayout: true,
+              minimap: { enabled: false },
+              fontSize: editorFontSize,
+              lineNumbers: "on",
+              wordWrap: "on",
+              tabSize: 2,
+              scrollBeyondLastLine: false,
+              formatOnPaste: true,
+              formatOnType: true,
+            }}
+          />
         </ResizablePanel>
 
-        {/* Resizable handle */}
-        <ResizableHandle className="bg-gray-700 hover:bg-gray-600" withHandle />
+        <ResizableHandle className="bg-zinc-200 transition-colors hover:bg-orange-500/60 dark:bg-zinc-800" />
 
-        <ResizablePanel defaultSize={50}>
-          <div className="h-full bg-gray-900 flex flex-col overflow-hidden border border-gray-700 shadow-sm">
-            <div className="bg-gray-800 px-4 py-2 border-b border-gray-700 flex items-center justify-between">
-              <h3 className="text-sm font-medium text-gray-200">
-                JSON Tree View
-              </h3>
+        <ResizablePanel defaultSize={50} minSize={15}>
+          <div className="flex h-full flex-col bg-white dark:bg-[#0A0A0B]">
+            <div className="flex h-9 shrink-0 items-center justify-between gap-2 border-b border-zinc-200 px-3 dark:border-zinc-800">
+              <span className="text-xs font-medium text-zinc-900 dark:text-zinc-100">
+                Tree
+              </span>
+              {!autoUpdate && !jsonError && (
+                <button
+                  type="button"
+                  onClick={parseJson}
+                  title="Rebuild the tree"
+                  className={iconButton}
+                >
+                  <RefreshCw className="h-3.5 w-3.5" aria-hidden />
+                  <span className="sr-only">Rebuild the tree</span>
+                </button>
+              )}
               {jsonError && (
-                <div className="text-red-400 text-xs">Error: {jsonError}</div>
+                <span className="inline-flex min-w-0 items-center gap-1 text-[11px] text-red-600 dark:text-red-400">
+                  <AlertCircle className="h-3 w-3 shrink-0" aria-hidden />
+                  <span className="truncate">{jsonError}</span>
+                </span>
               )}
             </div>
 
-            <div className="w-full h-full bg-gray-900 relative">
-              <JsonTreeView
-                jsonTree={jsonTree}
-                expandedPaths={expandedPaths}
-                toggleNode={toggleNode}
-                jsonError={jsonError}
-                containerRef={previewRef}
-                autoUpdate={autoUpdate}
-                onUpdate={parseJson}
-              />
-            </div>
+            <JsonTreeView
+              jsonTree={jsonTree}
+              expandedPaths={expandedPaths}
+              toggleNode={toggleNode}
+              jsonError={jsonError}
+              containerRef={previewRef}
+            />
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>
