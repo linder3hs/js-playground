@@ -27,11 +27,11 @@ export const metadata: Metadata = {
     title: "JS Playground - Interactive JavaScript & TypeScript Code Editor",
     description:
       "Free online JavaScript and TypeScript playground with real-time code execution, Monaco editor, and advanced features for beginners and professionals.",
-    url: "https://js-playground-alpha.vercel.app/",
+    url: "https://playground.linderhassinger.dev/",
     siteName: "JS Playground",
     images: [
       {
-        url: "https://js-playground-alpha.vercel.app/image.png",
+        url: "https://playground.linderhassinger.dev/image.png",
         width: 1200,
         height: 630,
         alt: "JS Playground Preview",
@@ -45,7 +45,7 @@ export const metadata: Metadata = {
     title: "JS Playground - Interactive JavaScript & TypeScript Code Editor",
     description:
       "Free online JavaScript and TypeScript playground with real-time code execution, Monaco editor, and advanced features for beginners and professionals.",
-    images: ["https://js-playground-alpha.vercel.app/image.png"],
+    images: ["https://playground.linderhassinger.dev/image.png"],
   },
   robots: {
     index: true,
@@ -59,7 +59,7 @@ export const metadata: Metadata = {
     },
   },
   alternates: {
-    canonical: "https://js-playground-alpha.vercel.app/",
+    canonical: "https://playground.linderhassinger.dev/",
   },
 };
 
@@ -82,7 +82,7 @@ export default function RootLayout({
     },
     description:
       "A modern, feature-rich JavaScript playground built with Next.js and Monaco Editor for testing, learning, and experimenting with JavaScript code.",
-    screenshot: "https://js-playground-alpha.vercel.app/image.png",
+    screenshot: "https://playground.linderhassinger.dev/image.png",
     softwareVersion: "1.0",
     aggregateRating: {
       "@type": "AggregateRating",
@@ -116,7 +116,7 @@ export default function RootLayout({
         <meta property="og:type" content="website" />
         <meta
           property="og:url"
-          content="https://js-playground-alpha.vercel.app/"
+          content="https://playground.linderhassinger.dev/"
         />
         <meta
           property="og:title"
@@ -128,14 +128,14 @@ export default function RootLayout({
         />
         <meta
           property="og:image"
-          content="https://js-playground-alpha.vercel.app/image.png"
+          content="https://playground.linderhassinger.dev/image.png"
         />
 
         {/* Twitter */}
         <meta property="twitter:card" content="summary_large_image" />
         <meta
           property="twitter:url"
-          content="https://js-playground-alpha.vercel.app/"
+          content="https://playground.linderhassinger.dev/"
         />
         <meta
           property="twitter:title"
@@ -147,31 +147,15 @@ export default function RootLayout({
         />
         <meta
           property="twitter:image"
-          content="https://js-playground-alpha.vercel.app/image.png"
+          content="https://playground.linderhassinger.dev/image.png"
         />
 
         {/* Canonical URL */}
-        <link rel="canonical" href="https://js-playground-alpha.vercel.app/" />
+        <link rel="canonical" href="https://playground.linderhassinger.dev/" />
 
-        {/* Favicon */}
-        <link rel="icon" href="/favicon.ico" />
-        <link
-          rel="apple-touch-icon"
-          sizes="180x180"
-          href="/apple-touch-icon.png"
-        />
-        <link
-          rel="icon"
-          type="image/png"
-          sizes="32x32"
-          href="/favicon-32x32.png"
-        />
-        <link
-          rel="icon"
-          type="image/png"
-          sizes="16x16"
-          href="/favicon-16x16.png"
-        />
+        {/* Icons come from the app directory conventions: favicon.ico,
+            icon.svg and apple-icon.png. Next injects the links itself; the
+            hand-written ones here pointed at files that never existed. */}
         <link rel="manifest" href="/site.webmanifest" />
 
        

@@ -7,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: "/",
       disallow: ["/api/", "/private/"],
     },
-    sitemap: "https://js-playground-alpha.vercel.app/sitemap.xml",
+    sitemap: "https://playground.linderhassinger.dev/sitemap.xml",
   };
 }

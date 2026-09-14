@@ -3,7 +3,7 @@ import { NextConfig } from "next";
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   images: {
-    domains: ["js-playground-alpha.vercel.app"],
+    domains: ["playground.linderhassinger.dev"],
     formats: ["image/avif", "image/webp"],
   },
   compress: true,

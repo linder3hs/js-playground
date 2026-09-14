@@ -1,11 +1,11 @@
 # robots.txt file for JS Playground
-# https://js-playground-alpha.vercel.app/
+# https://playground.linderhassinger.dev/
 
 User-agent: *
 Allow: /
 
 # Sitemap location
-Sitemap: https://js-playground-alpha.vercel.app/sitemap.xml
+Sitemap: https://playground.linderhassinger.dev/sitemap.xml
 
 # Discourage crawling of admin/backend areas
 User-agent: *

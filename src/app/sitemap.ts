@@ -1,7 +1,7 @@
 import { MetadataRoute } from "next";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = "https://js-playground-alpha.vercel.app";
+  const baseUrl = "https://playground.linderhassinger.dev";
 
   return [
     {

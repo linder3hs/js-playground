@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Braces, FileText, SquareCode } from "lucide-react";
+import { Logo } from "@/components/brand/logo";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
 
@@ -76,11 +77,8 @@ export function PlaygroundHeader({ left, children }: PlaygroundHeaderProps) {
   return (
     <header className="flex h-11 shrink-0 items-center justify-between gap-4 border-b border-zinc-200 px-3 dark:border-zinc-800">
       <div className="flex items-center gap-3">
-        <Link
-          href="/"
-          className="hidden text-sm font-medium tracking-tight text-zinc-900 md:inline dark:text-zinc-100"
-        >
-          js<span className="text-orange-500">/</span>playground
+        <Link href="/" aria-label="js/playground home" className="hidden md:block">
+          <Logo />
         </Link>
 
         <PlaygroundSwitcher />

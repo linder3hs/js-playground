@@ -4,14 +4,13 @@
   "description": "Interactive JavaScript & TypeScript Code Editor",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0E1525",
-  "theme_color": "#0E1525",
+  "background_color": "#0A0A0B",
+  "theme_color": "#0A0A0B",
   "icons": [
     {
       "src": "/android-chrome-192x192.png",
       "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/png"
     },
     {
       "src": "/android-chrome-512x512.png",
@@ -19,11 +18,15 @@
       "type": "image/png"
     }
   ],
-  "categories": ["developer tools", "education", "productivity"],
+  "categories": [
+    "developer tools",
+    "education",
+    "productivity"
+  ],
   "screenshots": [
     {
-      "src": "/screenshot1.png",
-      "sizes": "1280x720",
+      "src": "/image.png",
+      "sizes": "1200x630",
       "type": "image/png"
     }
   ]

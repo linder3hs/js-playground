@@ -1,6 +1,7 @@
 import { Github } from "lucide-react";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { Logo } from "@/components/brand/logo";
 
 const navLinks = [
   { name: "JS / TS", href: "/playground/js-ts" },
@@ -12,8 +13,8 @@ export function Navbar() {
   return (
     <header className="fixed inset-x-0 top-0 z-50 border-b border-zinc-200 bg-white/80 backdrop-blur-md dark:border-zinc-800/80 dark:bg-[#0A0A0B]/80">
       <nav className="mx-auto flex h-14 max-w-5xl items-center justify-between px-6">
-        <Link href="/" className="font-medium tracking-tight">
-          js<span className="text-orange-500">/</span>playground
+        <Link href="/" aria-label="js/playground home">
+          <Logo />
         </Link>
 
         {/* ponytail: no mobile menu — the playground grid below is the mobile nav */}

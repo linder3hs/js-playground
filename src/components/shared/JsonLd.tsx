@@ -17,7 +17,7 @@ export function WebsiteJsonLd() {
             priceCurrency: "USD",
           },
           operatingSystem: "All",
-          url: "https://js-playground-alpha.vercel.app",
+          url: "https://playground.linderhassinger.dev",
           features: [
             "Multiple programming language support",
             "Real-time code execution",
