@@ -1,17 +1,75 @@
 import { useState, useRef, useEffect } from "react";
+import { useTheme } from "next-themes";
+import { Marked } from "marked";
+import Prism from "prismjs";
+import "prismjs/components/prism-typescript";
+import "prismjs/components/prism-json";
+import "prismjs/components/prism-bash";
+import "prismjs/components/prism-python";
 import { useToast } from "@/hooks/use-toast";
-import { Monaco } from "@monaco-editor/react";
-import { MonacoEditor } from "@/lib/types";
+import type { LayoutOrientation } from "@/lib/types";
 
 // Default markdown content
 const DEFAULT_MARKDOWN = `# Markdown Editor
 
-## Welcome to JS Playground Markdown Editor
+Live preview with **GitHub Flavored Markdown**: tables, task lists,
+~~strikethrough~~ and autolinks like https://github.com.
 
-This is a simple markdown editor with live preview. You can:
+## Checklist
 
-> **Note**: This editor supports GitHub Flavored Markdown.
+- [x] Fenced code with highlighting
+- [ ] Nested lists
+  - like this one
+
+\`\`\`js
+const greet = (name) => \`Hello, \${name}!\`;
+console.log(greet("world"));
+\`\`\`
+
+| Feature | Supported |
+| ------- | :-------: |
+| Tables  |     ✓     |
+| Task lists |  ✓     |
+
+> **Note**: rendered with \`marked\`, the same GFM rules GitHub uses.
 `;
+
+/**
+ * El preview usaba un parser a mano de ~90 líneas de regex: metía bloques
+ * dentro de `<p>`, duplicaba el cuerpo de los fences, aplicaba `**negrita**`
+ * dentro del código y no conocía task lists, strikethrough ni listas
+ * anidadas. `marked` trae GFM (tablas, tachado, autolinks, task lists) de
+ * fábrica, en una sola dependencia sin deps transitivas.
+ *
+ * GitHub renderiza con cmark-gfm; lo más fiel en JS sería remark-gfm, pero
+ * arrastra el stack de unified entero para diferencias que este preview no
+ * alcanza a notar.
+ */
+const marked = new Marked({
+  gfm: true,
+  breaks: false,
+  renderer: {
+    // Prism ya estaba en el proyecto, pero el resaltado nunca corría: el
+    // parser viejo inyectaba un `<script>` con `Prism.highlightAll()` sobre
+    // una librería que nadie importaba.
+    code({ text, lang }) {
+      const grammar = lang && Prism.languages[lang];
+      const body = grammar
+        ? Prism.highlight(text, grammar, lang as string)
+        : escapeHtml(text);
+      return `<pre><code class="language-${escapeHtml(
+        lang || "text"
+      )}">${body}</code></pre>`;
+    },
+  },
+});
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
 
 export interface UseMarkdownPlaygroundOptions {
   initialMarkdown?: string;
@@ -23,9 +81,11 @@ export function useMarkdownPlayground(options?: UseMarkdownPlaygroundOptions) {
     options?.initialMarkdown || DEFAULT_MARKDOWN
   );
 
+  const { resolvedTheme } = useTheme();
+
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [autoUpdate, setAutoUpdate] = useState<boolean>(true);
-  const [previewLayout, setPreviewLayout] = useState<"right" | "left">("right");
+  const [orientation, setOrientation] = useState<LayoutOrientation>("horizontal");
   const [editorFontSize] = useState<number>(14);
 
   const previewRef = useRef<HTMLDivElement>(null);
@@ -64,153 +124,7 @@ export function useMarkdownPlayground(options?: UseMarkdownPlaygroundOptions) {
   // Update preview with parsed markdown
   const updatePreview = (): void => {
     if (!previewRef.current) return;
-
-    // Parse markdown to HTML
-    const html = parseMarkdown(markdown);
-    previewRef.current.innerHTML = html;
-
-    // Apply syntax highlighting to code blocks
-    const prismScript = document.createElement("script");
-    prismScript.textContent = `
-      if (typeof Prism !== 'undefined') {
-        Prism.highlightAll();
-      }
-    `;
-    previewRef.current.appendChild(prismScript);
-
-    // Render math if MathJax is available
-    const mathJaxScript = document.createElement("script");
-    mathJaxScript.textContent = `
-      if (typeof MathJax !== 'undefined') {
-        MathJax.typeset();
-      }
-    `;
-    previewRef.current.appendChild(mathJaxScript);
-  };
-
-  // Simple markdown parser (in a real app, use a library)
-  const parseMarkdown = (md: string): string => {
-    // This is a very simple parser and doesn't handle all markdown features
-    let html = md;
-
-    // Headers
-    html = html.replace(/^# (.*$)/gm, "<h1>$1</h1>");
-    html = html.replace(/^## (.*$)/gm, "<h2>$1</h2>");
-    html = html.replace(/^### (.*$)/gm, "<h3>$1</h3>");
-    html = html.replace(/^#### (.*$)/gm, "<h4>$1</h4>");
-    html = html.replace(/^##### (.*$)/gm, "<h5>$1</h5>");
-    html = html.replace(/^###### (.*$)/gm, "<h6>$1</h6>");
-
-    // Bold
-    html = html.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
-    html = html.replace(/__(.*?)__/g, "<strong>$1</strong>");
-
-    // Italic
-    html = html.replace(/\*(.*?)\*/g, "<em>$1</em>");
-    html = html.replace(/_(.*?)_/g, "<em>$1</em>");
-
-    // Code blocks
-    html = html.replace(
-      /\`\`\`([\s\S]*?)\`\`\`/g,
-      '<pre><code class="language-$1">$1</code></pre>'
-    );
-
-    // Inline code
-    html = html.replace(/\`(.*?)\`/g, "<code>$1</code>");
-
-    // Links
-    html = html.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2">$1</a>');
-
-    // Images
-    html = html.replace(/!\[(.*?)\]\((.*?)\)/g, '<img alt="$1" src="$2" />');
-
-    // Lists
-    html = html.replace(/^\* (.*$)/gm, "<ul><li>$1</li></ul>");
-    html = html.replace(/^- (.*$)/gm, "<ul><li>$1</li></ul>");
-    html = html.replace(/^(\d+)\. (.*$)/gm, "<ol><li>$2</li></ol>");
-
-    // Fix lists (this is a simplistic approach)
-    html = html.replace(/<\/ul><ul>/g, "");
-    html = html.replace(/<\/ol><ol>/g, "");
-
-    // Blockquotes
-    html = html.replace(/^> (.*$)/gm, "<blockquote>$1</blockquote>");
-    html = html.replace(/<\/blockquote><blockquote>/g, "<br/>");
-
-    // Paragraphs
-    html = html.replace(/\n\s*\n/g, "</p><p>");
-    html = "<p>" + html + "</p>";
-
-    // Tables (very simple implementation)
-    const tableRegex = /\|(.+)\|\n\|(?:[-:]+\|)+\n((?:\|.+\|\n)+)/g;
-    html = html.replace(tableRegex, (match, headers, rows) => {
-      const headerCells = headers
-        .split("|")
-        .filter((cell: string) => cell.trim() !== "");
-      const tableRows = rows.trim().split("\n");
-
-      let tableHtml = '<table class="md-table"><thead><tr>';
-      headerCells.forEach((header: string) => {
-        tableHtml += `<th>${header.trim()}</th>`;
-      });
-      tableHtml += "</tr></thead><tbody>";
-
-      tableRows.forEach((row: string) => {
-        tableHtml += "<tr>";
-        const cells = row
-          .split("|")
-          .filter((cell: string) => cell.trim() !== "");
-        cells.forEach((cell: string) => {
-          tableHtml += `<td>${cell.trim()}</td>`;
-        });
-        tableHtml += "</tr>";
-      });
-
-      tableHtml += "</tbody></table>";
-      return tableHtml;
-    });
-
-    // Math expressions (for rendering with MathJax)
-    html = html.replace(
-      /\$\$([\s\S]*?)\$\$/g,
-      '<div class="math">$$$$1$$</div>'
-    );
-    html = html.replace(/\$(.*?)\$/g, '<span class="math">\\($1\\)</span>');
-
-    return html;
-  };
-
-  // Configure Monaco editor
-  const editorWillMount = (monaco: Monaco) => {
-    monaco.languages.register({ id: "markdown" });
-
-    // Custom dark theme
-    monaco.editor.defineTheme("vs-dark-custom", {
-      base: "vs-dark",
-      inherit: true,
-      rules: [],
-      colors: {
-        "editor.background": "#1E1E1E",
-        "editor.foreground": "#D4D4D4",
-        "editor.lineHighlightBackground": "#2D2D30",
-        "editor.selectionBackground": "#264F78",
-        "editor.inactiveSelectionBackground": "#3A3D41",
-        "editorLineNumber.foreground": "#858585",
-      },
-    });
-
-    monaco.editor.setTheme("vs-dark-custom");
-  };
-
-  // Handle editor mounting
-  const handleEditorDidMount = (editor: MonacoEditor, monaco: Monaco) => {
-    monaco.editor.setTheme("vs-dark-custom");
-
-    // Force redraw for theme
-    setTimeout(() => {
-      editor.updateOptions({});
-      monaco.editor.setTheme("vs-dark-custom");
-    }, 100);
+    previewRef.current.innerHTML = marked.parse(markdown) as string;
   };
 
   // Update preview when markdown changes
@@ -226,16 +140,17 @@ export function useMarkdownPlayground(options?: UseMarkdownPlaygroundOptions) {
     setMarkdown,
     isFullscreen,
     autoUpdate,
-    previewLayout,
+    orientation,
     editorFontSize,
     previewRef,
+    editorTheme: (resolvedTheme === "light" ? "light" : "dark") as
+      | "light"
+      | "dark",
     toggleFullscreen,
     setAutoUpdate,
-    setPreviewLayout,
+    setOrientation,
     downloadMarkdown,
     copyMarkdown,
     updatePreview,
-    editorWillMount,
-    handleEditorDidMount,
   };
 }

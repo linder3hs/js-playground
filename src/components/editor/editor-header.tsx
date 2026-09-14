@@ -1,20 +1,20 @@
 "use client";
 
-import Link from "next/link";
 import { Columns2, Play, Rows2, Share2 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
+import {
+  PlaygroundHeader,
+  iconButton,
+  textButton,
+} from "./playground-header";
 import type { PlaygroundLanguage } from "@/store/editor-store";
 import type { LayoutOrientation } from "@/lib/types";
 
 /**
- * Barra única del playground. Reemplaza al `shared/EditorToolbar` genérico en
- * esta pantalla: el compartido no tiene control segmentado ni deja mostrar el
- * atajo, y doblarlo costaba más que estas líneas. Los otros playgrounds siguen
- * usando el compartido.
- *
- * Sigue el mismo lenguaje que el mock del editor en el landing: fila de 44px,
- * borde inferior zinc, acento naranja sólo en hover.
+ * Barra del playground JS/TS. El marco (marca, altura, bordes) vive en
+ * `PlaygroundHeader`, compartido con los demás playgrounds; aquí sólo van los
+ * controles propios: lenguaje, auto-run y ejecutar.
  */
 
 interface EditorHeaderProps {
@@ -34,9 +34,6 @@ const LANGUAGES: { value: PlaygroundLanguage; label: string }[] = [
   { value: "typescript", label: "TS" },
 ];
 
-const iconButton =
-  "inline-flex h-7 w-7 items-center justify-center rounded text-zinc-500 transition-colors hover:text-zinc-900 dark:text-zinc-500 dark:hover:text-zinc-100";
-
 export function EditorHeader({
   language,
   onLanguageChange,
@@ -49,15 +46,8 @@ export function EditorHeader({
   onToggleOrientation,
 }: EditorHeaderProps) {
   return (
-    <header className="flex h-11 shrink-0 items-center justify-between gap-4 border-b border-zinc-200 px-3 dark:border-zinc-800">
-      <div className="flex items-center gap-3">
-        <Link
-          href="/"
-          className="text-sm font-medium tracking-tight text-zinc-900 dark:text-zinc-100"
-        >
-          js<span className="text-orange-500">/</span>playground
-        </Link>
-
+    <PlaygroundHeader
+      left={
         <div
           role="radiogroup"
           aria-label="Language"
@@ -81,59 +71,57 @@ export function EditorHeader({
             </button>
           ))}
         </div>
-      </div>
+      }
+    >
+      <label className="flex cursor-pointer items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
+        <Switch
+          checked={autoRun}
+          onCheckedChange={onAutoRunChange}
+          aria-label="Run as you type"
+        />
+        Run as you type
+      </label>
 
-      <div className="flex items-center gap-3">
-        <label className="flex cursor-pointer items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
-          <Switch
-            checked={autoRun}
-            onCheckedChange={onAutoRunChange}
-            aria-label="Run as you type"
-          />
-          Run as you type
-        </label>
+      <button
+        type="button"
+        onClick={onRun}
+        disabled={isRunning}
+        title="Run now (Ctrl/⌘ + Enter)"
+        className={textButton}
+      >
+        <Play className="h-3 w-3" aria-hidden />
+        Run
+      </button>
+
+      <div className="flex items-center">
+        <button
+          type="button"
+          onClick={onShare}
+          title="Copy a link to this code"
+          className={iconButton}
+        >
+          <Share2 className="h-4 w-4" aria-hidden />
+          <span className="sr-only">Copy a link to this code</span>
+        </button>
 
         <button
           type="button"
-          onClick={onRun}
-          disabled={isRunning}
-          title="Run now (Ctrl/⌘ + Enter)"
-          className="inline-flex h-7 items-center gap-1.5 rounded border border-zinc-200 px-2.5 text-[11px] font-medium text-zinc-500 transition-colors hover:border-orange-500/60 hover:text-orange-500 disabled:opacity-40 dark:border-zinc-800"
+          onClick={onToggleOrientation}
+          title={
+            orientation === "horizontal"
+              ? "Stack editor and console"
+              : "Place console beside the editor"
+          }
+          className={iconButton}
         >
-          <Play className="h-3 w-3" aria-hidden />
-          Run
+          {orientation === "horizontal" ? (
+            <Rows2 className="h-4 w-4" aria-hidden />
+          ) : (
+            <Columns2 className="h-4 w-4" aria-hidden />
+          )}
+          <span className="sr-only">Switch layout</span>
         </button>
-
-        <div className="flex items-center">
-          <button
-            type="button"
-            onClick={onShare}
-            title="Copy a link to this code"
-            className={iconButton}
-          >
-            <Share2 className="h-4 w-4" aria-hidden />
-            <span className="sr-only">Copy a link to this code</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={onToggleOrientation}
-            title={
-              orientation === "horizontal"
-                ? "Stack editor and console"
-                : "Place console beside the editor"
-            }
-            className={iconButton}
-          >
-            {orientation === "horizontal" ? (
-              <Rows2 className="h-4 w-4" aria-hidden />
-            ) : (
-              <Columns2 className="h-4 w-4" aria-hidden />
-            )}
-            <span className="sr-only">Switch layout</span>
-          </button>
-        </div>
       </div>
-    </header>
+    </PlaygroundHeader>
   );
 }

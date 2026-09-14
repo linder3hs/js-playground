@@ -2,360 +2,226 @@
 
 import { Editor } from "@monaco-editor/react";
 import {
+  Columns2,
+  Copy,
+  Download,
+  Maximize,
+  Minimize,
+  Play,
+  RefreshCw,
+  Rows2,
+} from "lucide-react";
+import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
-import { Play, Download, Copy, Maximize, Minimize } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { EditorToolbar } from "@/components/shared/EditorToolbar";
+import { Switch } from "@/components/ui/switch";
+import {
+  PlaygroundHeader,
+  iconButton,
+  textButton,
+} from "@/components/editor/playground-header";
+import { THEMES, defineThemes } from "@/components/editor/monaco-editor";
 import { useMarkdownPlayground } from "@/hooks/use-markdown-playground";
 
+/**
+ * Misma anatomía que el playground JS/TS: barra de 44px arriba, editor y panel
+ * hermano en un `ResizablePanelGroup`, paleta zinc y acento naranja sólo en
+ * hover. Aquí el panel hermano es la vista previa en vez de la consola.
+ */
 export function MarkdownPlayground() {
   const {
     markdown,
     setMarkdown,
     isFullscreen,
     autoUpdate,
-    previewLayout,
+    orientation,
     editorFontSize,
     previewRef,
+    editorTheme,
     toggleFullscreen,
     setAutoUpdate,
-    setPreviewLayout,
+    setOrientation,
     downloadMarkdown,
     copyMarkdown,
     updatePreview,
-    editorWillMount,
-    handleEditorDidMount,
   } = useMarkdownPlayground();
-
-  // Toolbar configuration
-  const toolbarActions = [
-    {
-      id: "update",
-      label: "Update",
-      icon: <Play className="w-4 h-4 mr-2 text-gray-300" />,
-      onClick: updatePreview,
-      tooltip: "Update preview",
-    },
-    {
-      id: "download",
-      label: "Download",
-      icon: <Download className="w-4 h-4 mr-2 text-gray-300" />,
-      onClick: downloadMarkdown,
-      tooltip: "Download as Markdown file",
-    },
-    {
-      id: "copy",
-      label: "Copy",
-      icon: <Copy className="w-4 h-4 mr-2 text-gray-300" />,
-      onClick: copyMarkdown,
-      tooltip: "Copy Markdown to clipboard",
-    },
-    {
-      id: "fullscreen",
-      label: "",
-      icon: isFullscreen ? (
-        <Minimize className="w-4 h-4 text-gray-300" />
-      ) : (
-        <Maximize className="w-4 h-4 text-gray-300" />
-      ),
-      onClick: toggleFullscreen,
-      tooltip: isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen",
-    },
-  ];
-
-  const toolbarToggles = [
-    {
-      id: "auto-update",
-      label: "Auto Update",
-      isChecked: autoUpdate,
-      onChange: setAutoUpdate,
-    },
-  ];
-
-  const toolbarSelects = [
-    {
-      id: "layout-select",
-      value: previewLayout,
-      onChange: (value: "right" | "left") => setPreviewLayout(value),
-      options: [
-        { value: "right", label: "Right" },
-        { value: "left", label: "Left" },
-      ],
-    },
-  ];
-
-  const config = {
-    direction: previewLayout === "right" ? "horizontal" : "horizontal",
-    editorSize: 50,
-    previewSize: 50,
-  };
 
   return (
     <div
-      className={`${
-        isFullscreen ? "fixed inset-0 z-50 bg-gray-950" : "h-[calc(100vh-4rem)]"
+      className={`flex flex-col bg-white text-zinc-900 dark:bg-[#0A0A0B] dark:text-zinc-100 ${
+        isFullscreen ? "fixed inset-0 z-50 h-screen" : "h-screen"
       }`}
     >
-      {/* Toolbar */}
-      <EditorToolbar
-        title={{ text: "Markdown Editor" }}
-        actions={toolbarActions}
-        toggles={toolbarToggles}
-        selects={toolbarSelects}
-        darkMode={true}
-      />
-
-      {/* Resizable panels */}
-      <ResizablePanelGroup
-        direction={config.direction as "horizontal" | "vertical"}
-        className="bg-gray-900"
+      <PlaygroundHeader
+        left={
+          <span className="rounded-md border border-zinc-200 px-2.5 py-1 text-xs font-medium text-zinc-500 dark:border-zinc-800">
+            Markdown
+          </span>
+        }
       >
-        {previewLayout === "left" && (
-          <ResizablePanel defaultSize={config.previewSize}>
-            <div className="h-full bg-gray-900 flex flex-col overflow-hidden border border-gray-900 shadow-sm">
-              <div className="bg-gray-950 px-4 py-2 border-b border-gray-900 flex items-center justify-between">
-                <h3 className="text-sm font-medium text-gray-200">Preview</h3>
-                {!autoUpdate && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={updatePreview}
-                    title="Refresh Preview"
-                    className="text-gray-300 hover:bg-gray-700"
-                  >
-                    <Play className="w-4 h-4" />
-                  </Button>
-                )}
-              </div>
-              <div className="w-full h-full bg-gray-900 overflow-auto p-4 relative">
-                <div
-                  ref={previewRef}
-                  className="markdown-preview prose max-w-none dark-mode"
-                ></div>
-                {!autoUpdate && (
-                  <div className="absolute inset-0 bg-gray-900/70 flex items-center justify-center pointer-events-none">
-                    <Button
-                      onClick={updatePreview}
-                      className="pointer-events-auto bg-gray-800 text-gray-100 hover:bg-gray-700"
-                      variant="secondary"
-                    >
-                      <Play className="w-4 h-4 mr-2" />
-                      Click to Update
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </div>
-          </ResizablePanel>
-        )}
+        <label className="flex cursor-pointer items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
+          <Switch
+            checked={autoUpdate}
+            onCheckedChange={setAutoUpdate}
+            aria-label="Preview as you type"
+          />
+          Preview as you type
+        </label>
 
-        <ResizablePanel defaultSize={config.editorSize}>
-          <div className="flex flex-col h-full border border-gray-700 shadow-sm bg-gray-900">
-            <div className="flex-1 overflow-hidden">
-              <Editor
-                height="100%"
-                defaultLanguage="markdown"
-                value={markdown}
-                onChange={(value) => setMarkdown(value || "")}
-                beforeMount={editorWillMount}
-                onMount={handleEditorDidMount}
-                options={{
-                  minimap: { enabled: true },
-                  fontSize: editorFontSize,
-                  lineNumbers: "on",
-                  roundedSelection: false,
-                  scrollBeyondLastLine: false,
-                  readOnly: false,
-                  theme: "vs-dark-custom",
-                  wordWrap: "on",
-                  automaticLayout: true,
-                  tabSize: 2,
-                  snippetSuggestions: "on",
-                }}
-              />
-            </div>
-          </div>
+        <button
+          type="button"
+          onClick={updatePreview}
+          title="Update the preview now"
+          className={textButton}
+        >
+          <Play className="h-3 w-3" aria-hidden />
+          Update
+        </button>
+
+        <div className="flex items-center">
+          <button
+            type="button"
+            onClick={copyMarkdown}
+            title="Copy the Markdown"
+            className={iconButton}
+          >
+            <Copy className="h-4 w-4" aria-hidden />
+            <span className="sr-only">Copy the Markdown</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={downloadMarkdown}
+            title="Download as a .md file"
+            className={iconButton}
+          >
+            <Download className="h-4 w-4" aria-hidden />
+            <span className="sr-only">Download as a .md file</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() =>
+              setOrientation(
+                orientation === "horizontal" ? "vertical" : "horizontal"
+              )
+            }
+            title={
+              orientation === "horizontal"
+                ? "Stack editor and preview"
+                : "Place preview beside the editor"
+            }
+            className={iconButton}
+          >
+            {orientation === "horizontal" ? (
+              <Rows2 className="h-4 w-4" aria-hidden />
+            ) : (
+              <Columns2 className="h-4 w-4" aria-hidden />
+            )}
+            <span className="sr-only">Switch layout</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={toggleFullscreen}
+            title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+            className={iconButton}
+          >
+            {isFullscreen ? (
+              <Minimize className="h-4 w-4" aria-hidden />
+            ) : (
+              <Maximize className="h-4 w-4" aria-hidden />
+            )}
+            <span className="sr-only">Toggle fullscreen</span>
+          </button>
+        </div>
+      </PlaygroundHeader>
+
+      <ResizablePanelGroup direction={orientation} className="flex-1">
+        <ResizablePanel defaultSize={50} minSize={25}>
+          <Editor
+            height="100%"
+            language="markdown"
+            theme={THEMES[editorTheme].name}
+            beforeMount={defineThemes}
+            value={markdown}
+            onChange={(value) => setMarkdown(value || "")}
+            options={{
+              automaticLayout: true,
+              minimap: { enabled: false },
+              fontSize: editorFontSize,
+              lineNumbers: "on",
+              wordWrap: "on",
+              tabSize: 2,
+              scrollBeyondLastLine: false,
+            }}
+          />
         </ResizablePanel>
 
-        {/* Resizable handle */}
-        <ResizableHandle className="bg-gray-700 hover:bg-gray-600" withHandle />
+        <ResizableHandle className="bg-zinc-200 transition-colors hover:bg-orange-500/60 dark:bg-zinc-800" />
 
-        {previewLayout === "right" && (
-          <ResizablePanel defaultSize={config.previewSize}>
-            <div className="h-full bg-gray-900 flex flex-col overflow-hidden border border-gray-700 shadow-sm">
-              <div className="bg-gray-800 px-4 py-2 border-b border-gray-700 flex items-center justify-between">
-                <h3 className="text-sm font-medium text-gray-200">Preview</h3>
-                {!autoUpdate && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={updatePreview}
-                    title="Refresh Preview"
-                    className="text-gray-300 hover:bg-gray-700"
-                  >
-                    <Play className="w-4 h-4" />
-                  </Button>
-                )}
-              </div>
-              <div className="w-full h-full bg-gray-900 overflow-auto p-4 relative">
-                <div
-                  ref={previewRef}
-                  className="markdown-preview prose max-w-none dark-mode"
-                ></div>
-                {!autoUpdate && (
-                  <div className="absolute inset-0 bg-gray-900/70 flex items-center justify-center pointer-events-none">
-                    <Button
-                      onClick={updatePreview}
-                      className="pointer-events-auto bg-gray-800 text-gray-100 hover:bg-gray-700"
-                      variant="secondary"
-                    >
-                      <Play className="w-4 h-4 mr-2" />
-                      Click to Update
-                    </Button>
-                  </div>
-                )}
-              </div>
+        <ResizablePanel defaultSize={50} minSize={15}>
+          <div className="flex h-full flex-col bg-white dark:bg-[#0A0A0B]">
+            <div className="flex h-9 shrink-0 items-center justify-between border-b border-zinc-200 px-3 dark:border-zinc-800">
+              <span className="text-xs font-medium text-zinc-900 dark:text-zinc-100">
+                Preview
+              </span>
+              {!autoUpdate && (
+                <button
+                  type="button"
+                  onClick={updatePreview}
+                  title="Refresh the preview"
+                  className={iconButton}
+                >
+                  <RefreshCw className="h-3.5 w-3.5" aria-hidden />
+                  <span className="sr-only">Refresh the preview</span>
+                </button>
+              )}
             </div>
-          </ResizablePanel>
-        )}
+
+            <div
+              ref={previewRef}
+              className="markdown-preview flex-1 overflow-auto px-5 py-4"
+            />
+          </div>
+        </ResizablePanel>
       </ResizablePanelGroup>
 
-      {/* CSS for markdown preview (keeping the same styles for consistency) */}
+      {/* La vista previa es HTML inyectado, no JSX: sus estilos no pueden ser
+          clases de Tailwind. Los colores salen de la misma paleta zinc que el
+          resto del playground, con un juego por tema. */}
       <style jsx global>{`
         .markdown-preview {
-          color: #e2e8f0;
-          line-height: 1.6;
-          font-size: 1rem;
-          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-            Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+          --md-text: #27272a;
+          --md-heading: #18181b;
+          --md-muted: #71717a;
+          --md-border: #e4e4e7;
+          --md-surface: #f4f4f5;
+          --md-link: #ea580c;
+          color: var(--md-text);
+          font-size: 0.9375rem;
+          line-height: 1.7;
         }
 
-        .markdown-preview p {
-          color: #e2e8f0;
-          margin: 1rem 0;
-          font-size: 1rem;
+        .dark .markdown-preview {
+          --md-text: #d4d4d8;
+          --md-heading: #fafafa;
+          --md-muted: #a1a1aa;
+          --md-border: #27272a;
+          --md-surface: #18181b;
+          --md-link: #fb923c;
         }
 
-        .markdown-preview a {
-          color: #60a5fa;
-          text-decoration: none;
-          border-bottom: 1px solid rgba(96, 165, 250, 0.3);
-          transition: border-color 0.2s ease;
+        .markdown-preview > :first-child {
+          margin-top: 0;
         }
 
-        .markdown-preview a:hover {
-          border-bottom-color: #60a5fa;
-        }
-
-        .markdown-preview img {
-          max-width: 100%;
-          margin: 1.5rem 0;
-          border-radius: 0.375rem;
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3),
-            0 2px 4px -1px rgba(0, 0, 0, 0.2);
-        }
-
-        .markdown-preview pre {
-          background-color: #2d3748;
-          padding: 1rem;
-          border-radius: 0.375rem;
-          overflow-x: auto;
-          margin: 1.5rem 0;
-          border: 1px solid #4a5568;
-        }
-
-        .markdown-preview code {
-          font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo,
-            Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-          font-size: 0.875rem;
-          padding: 0.2em 0.4em;
-          background-color: #2d3748;
-          border-radius: 0.25rem;
-          color: #e2e8f0;
-        }
-
-        .markdown-preview pre code {
-          padding: 0;
-          background-color: transparent;
-          border-radius: 0;
-          color: #e2e8f0;
-        }
-
-        .markdown-preview table {
-          border-collapse: collapse;
-          width: 100%;
-          margin: 1.5rem 0;
-          border: 1px solid #4a5568;
-          border-radius: 0.375rem;
-          overflow: hidden;
-        }
-
-        .markdown-preview table th {
-          background-color: #2d3748;
-          color: #f7fafc;
-          font-weight: 600;
-          padding: 0.75rem 1rem;
-          text-align: left;
-          border-bottom: 1px solid #4a5568;
-        }
-
-        .markdown-preview table td {
-          padding: 0.75rem 1rem;
-          border-bottom: 1px solid #4a5568;
-          color: #e2e8f0;
-        }
-
-        .markdown-preview table tr:last-child td {
-          border-bottom: none;
-        }
-
-        .markdown-preview table tr:nth-child(even) {
-          background-color: #2d3748;
-        }
-
-        .markdown-preview table tr:hover {
-          background-color: #4a5568;
-        }
-
-        .markdown-preview blockquote {
-          border-left: 4px solid #4a5568;
-          padding: 0.5rem 0 0.5rem 1rem;
-          margin: 1.5rem 0;
-          color: #cbd5e0;
-          background-color: #2d3748;
-          border-radius: 0 0.25rem 0.25rem 0;
-        }
-
-        .markdown-preview blockquote strong {
-          color: #f7fafc;
-        }
-
+        .markdown-preview p,
         .markdown-preview ul,
         .markdown-preview ol {
-          padding-left: 1.5rem;
-          margin: 1rem 0;
-          color: #e2e8f0;
-        }
-
-        .markdown-preview li {
-          margin: 0.5rem 0;
-        }
-
-        .markdown-preview ul li {
-          list-style-type: disc;
-        }
-
-        .markdown-preview ol li {
-          list-style-type: decimal;
-        }
-
-        .markdown-preview hr {
-          border: 0;
-          border-top: 1px solid #4a5568;
-          margin: 2rem 0;
+          margin: 0.85rem 0;
         }
 
         .markdown-preview h1,
@@ -364,86 +230,169 @@ export function MarkdownPlayground() {
         .markdown-preview h4,
         .markdown-preview h5,
         .markdown-preview h6 {
-          color: #f7fafc;
+          color: var(--md-heading);
           font-weight: 600;
-          line-height: 1.25;
-          margin-top: 2rem;
-          margin-bottom: 1rem;
-          position: relative;
+          line-height: 1.3;
+          margin: 1.75rem 0 0.75rem;
         }
 
         .markdown-preview h1 {
-          font-size: 2rem;
-          border-bottom: 1px solid #4a5568;
-          padding-bottom: 0.5rem;
-          margin-top: 0;
+          font-size: 1.5rem;
+          border-bottom: 1px solid var(--md-border);
+          padding-bottom: 0.4rem;
         }
 
         .markdown-preview h2 {
-          font-size: 1.5rem;
-          border-bottom: 1px solid #4a5568;
-          padding-bottom: 0.25rem;
+          font-size: 1.25rem;
+          border-bottom: 1px solid var(--md-border);
+          padding-bottom: 0.3rem;
         }
 
         .markdown-preview h3 {
-          font-size: 1.25rem;
+          font-size: 1.0625rem;
         }
 
-        .markdown-preview h4 {
-          font-size: 1.125rem;
+        .markdown-preview a {
+          color: var(--md-link);
+          text-decoration: none;
+          border-bottom: 1px solid transparent;
+          transition: border-color 0.15s ease;
         }
 
-        .markdown-preview .math {
-          font-family: serif;
-          color: #e2e8f0;
+        .markdown-preview a:hover {
+          border-bottom-color: currentColor;
         }
 
-        /* Syntax highlighting for code blocks - Dark theme */
-        .markdown-preview code .token.comment {
-          color: #a0aec0;
+        .markdown-preview code {
+          font-family: var(--font-geist-mono), ui-monospace, SFMono-Regular,
+            Menlo, monospace;
+          font-size: 0.8125rem;
+          background: var(--md-surface);
+          border-radius: 0.25rem;
+          padding: 0.15em 0.35em;
         }
 
-        .markdown-preview code .token.keyword {
-          color: #63b3ed;
+        .markdown-preview pre {
+          background: var(--md-surface);
+          border: 1px solid var(--md-border);
+          border-radius: 0.375rem;
+          padding: 0.85rem 1rem;
+          overflow-x: auto;
+          margin: 1.1rem 0;
         }
 
-        .markdown-preview code .token.string {
-          color: #f6ad55;
+        .markdown-preview pre code {
+          background: none;
+          padding: 0;
         }
 
-        .markdown-preview code .token.number {
-          color: #4fd1c5;
+        .markdown-preview blockquote {
+          border-left: 2px solid var(--md-link);
+          color: var(--md-muted);
+          padding-left: 0.9rem;
+          margin: 1.1rem 0;
         }
 
-        .markdown-preview code .token.function {
-          color: #b794f4;
+        .markdown-preview ul,
+        .markdown-preview ol {
+          padding-left: 1.35rem;
         }
 
-        .markdown-preview code .token.operator {
-          color: #cbd5e0;
+        .markdown-preview ul li {
+          list-style: disc;
         }
 
-        .markdown-preview code .token.punctuation {
-          color: #a0aec0;
+        .markdown-preview ol li {
+          list-style: decimal;
         }
 
-        /* Custom scrollbar for dark theme */
-        .markdown-preview::-webkit-scrollbar {
-          width: 10px;
-          height: 10px;
+        .markdown-preview li {
+          margin: 0.3rem 0;
         }
 
-        .markdown-preview::-webkit-scrollbar-track {
-          background: #2d3748;
+        .markdown-preview hr {
+          border: 0;
+          border-top: 1px solid var(--md-border);
+          margin: 1.75rem 0;
         }
 
-        .markdown-preview::-webkit-scrollbar-thumb {
-          background: #4a5568;
-          border-radius: 5px;
+        .markdown-preview img {
+          max-width: 100%;
+          border-radius: 0.375rem;
+          margin: 1.1rem 0;
         }
 
-        .markdown-preview::-webkit-scrollbar-thumb:hover {
-          background: #718096;
+        .markdown-preview table {
+          border-collapse: collapse;
+          width: 100%;
+          margin: 1.1rem 0;
+          font-size: 0.875rem;
+        }
+
+        /* marked marca la alineación de GFM con el atributo align, y un
+           text-align plano lo pisaba. */
+        .markdown-preview th,
+        .markdown-preview td {
+          border: 1px solid var(--md-border);
+          padding: 0.5rem 0.75rem;
+        }
+
+        .markdown-preview th:not([align]),
+        .markdown-preview td:not([align]) {
+          text-align: left;
+        }
+
+        .markdown-preview th {
+          background: var(--md-surface);
+          color: var(--md-heading);
+          font-weight: 600;
+        }
+
+        /* Task lists de GFM: marked emite el checkbox dentro del <li>. */
+        .markdown-preview li:has(> input[type="checkbox"]) {
+          list-style: none;
+          margin-left: -1.15rem;
+        }
+
+        .markdown-preview input[type="checkbox"] {
+          accent-color: var(--md-link);
+          margin-right: 0.4rem;
+          vertical-align: middle;
+        }
+
+        .markdown-preview del {
+          color: var(--md-muted);
+        }
+
+        /* Prism, con la misma paleta que el editor. */
+        .markdown-preview .token.comment,
+        .markdown-preview .token.punctuation {
+          color: var(--md-muted);
+        }
+
+        .markdown-preview .token.keyword,
+        .markdown-preview .token.boolean,
+        .markdown-preview .token.tag {
+          color: #c084fc;
+        }
+
+        .markdown-preview .token.string,
+        .markdown-preview .token.attr-value {
+          color: #4ade80;
+        }
+
+        .markdown-preview .token.number,
+        .markdown-preview .token.constant {
+          color: #fbbf24;
+        }
+
+        .markdown-preview .token.function,
+        .markdown-preview .token.class-name {
+          color: #60a5fa;
+        }
+
+        .markdown-preview .token.operator {
+          color: var(--md-text);
         }
       `}</style>
     </div>

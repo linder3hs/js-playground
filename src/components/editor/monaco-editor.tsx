@@ -28,7 +28,7 @@ loader.config({
  * .setTheme()`: la librería reaplica su prop después del mount y pisaría
  * cualquier llamada manual.
  */
-const THEMES = {
+export const THEMES = {
   dark: {
     name: "playground-dark",
     base: "vs-dark" as const,
@@ -51,7 +51,7 @@ const THEMES = {
   },
 };
 
-const defineThemes: BeforeMount = (monaco) => {
+export const defineThemes: BeforeMount = (monaco) => {
   for (const theme of Object.values(THEMES)) {
     monaco.editor.defineTheme(theme.name, {
       base: theme.base,

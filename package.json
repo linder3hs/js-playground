@@ -25,6 +25,7 @@
     "flatrepo": "^1.0.10",
     "js-base64": "^3.7.7",
     "lucide-react": "^0.476.0",
+    "marked": "^18.0.13",
     "motion": "^12.4.7",
     "next": "15.5.25",
     "next-auth": "^4.24.11",
