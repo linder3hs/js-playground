@@ -1,15 +1,16 @@
 import type { RunnerEvent } from "./protocol";
 
 export interface CodeRunnerOptions {
-  /** Ms antes de dar por colgado el run y matar el worker */
+  /** Ms before the run counts as hung and the worker is killed */
   timeoutMs?: number;
 }
 
 /**
- * Dueño del ciclo de vida del worker de ejecución.
+ * Owns the execution worker's lifecycle.
  *
- * Un worker se reutiliza entre runs. Si llega un run nuevo con otro en vuelo,
- * el anterior se mata: es lo que hace seguro ejecutar en cada pausa de tecleo.
+ * A worker is reused across runs. If a new run arrives while another is in
+ * flight, the previous one is killed: that is what makes running on every
+ * typing pause safe.
  */
 export class CodeRunner {
   private worker: Worker | null = null;
@@ -29,7 +30,7 @@ export class CodeRunner {
     return this.activeRunId !== null;
   }
 
-  /** Ejecuta JS transpilado. Cancela el run anterior si sigue vivo. */
+  /** Runs transpiled JS. Cancels the previous run if it is still alive. */
   run(code: string): string {
     if (this.activeRunId) this.kill();
 
@@ -43,7 +44,7 @@ export class CodeRunner {
     return runId;
   }
 
-  /** Libera el worker. Llamar al desmontar. */
+  /** Releases the worker. Call on unmount. */
   dispose(): void {
     this.clearTimer();
     this.worker?.terminate();
@@ -62,7 +63,7 @@ export class CodeRunner {
     worker.onmessage = (event: MessageEvent<RunnerEvent>) => {
       const data = event.data;
 
-      // Un run cancelado puede alcanzar a postear: se descarta.
+      // A cancelled run can still post: the message is dropped.
       if (data.type !== "crash" && data.runId !== this.activeRunId) return;
 
       if (data.type === "done") {
@@ -88,7 +89,7 @@ export class CodeRunner {
     return worker;
   }
 
-  /** Mata el worker en vuelo: única forma de cortar un bucle infinito. */
+  /** Kills the in-flight worker: the only way to break an infinite loop. */
   private kill(): void {
     this.clearTimer();
     this.worker?.terminate();

@@ -3,15 +3,15 @@ import type {
   ProcessedValue,
 } from "@/components/console/types";
 
-/** Mensaje que la página envía al worker */
+/** Message the page sends to the worker */
 export interface RunRequest {
   type: "run";
   runId: string;
-  /** JavaScript ya transpilado (el worker no sabe de TypeScript) */
+  /** Already transpiled JavaScript (the worker knows nothing about TypeScript) */
   code: string;
 }
 
-/** Mensajes que el worker envía de vuelta a la página */
+/** Messages the worker sends back to the page */
 export type RunnerEvent =
   | {
       type: "console";

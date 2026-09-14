@@ -7,9 +7,9 @@ import { ConsoleOutput as IConsoleOutput, ConsoleOutputType } from "../types";
 import { cn } from "@/lib/utils";
 
 interface ConsolePanelProps {
-  /** Ya filtradas: es lo que se pinta */
+  /** Already filtered: this is what gets painted */
   outputs: IConsoleOutput[];
-  /** Sin filtrar: los contadores deben seguir visibles con un filtro activo */
+  /** Unfiltered: the counters must stay visible while a filter is on */
   allOutputs: IConsoleOutput[];
   selectedOutput: string | null;
   filter: ConsoleOutputType | "all";
@@ -22,8 +22,8 @@ interface ConsolePanelProps {
 }
 
 /**
- * Contadores de error y warning. Son el único filtro: el resto de los niveles
- * no justificaba un chip permanente en cero.
+ * Error and warning counters. They are the only filter: the other levels did
+ * not justify a chip permanently sitting at zero.
  */
 function CountChip({
   count,
@@ -71,7 +71,7 @@ export function ConsolePanel({
 }: ConsolePanelProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Lo nuevo va abajo, como cualquier consola, y la vista lo sigue.
+  // New entries go at the bottom, like any console, and the view follows.
   useEffect(() => {
     const container = containerRef.current;
     if (container) container.scrollTop = container.scrollHeight;
@@ -83,7 +83,7 @@ export function ConsolePanel({
   const toggleFilter = (type: ConsoleOutputType) =>
     onSetFilter(filter === type ? "all" : type);
 
-  // Del más viejo al más nuevo: `outputs` llega al revés.
+  // Oldest to newest: `outputs` arrives the other way around.
   const ordered = [...outputs].reverse();
 
   return (

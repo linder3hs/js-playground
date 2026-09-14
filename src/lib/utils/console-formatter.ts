@@ -37,7 +37,7 @@ export function detectValueType(value: unknown): ValueType {
 
   if (type === "function") return "function";
 
-  // Detección de objetos especiales
+  // Detect special objects
   if (value instanceof Date) return "date";
   if (value instanceof RegExp) return "regexp";
   if (value instanceof Error) return "error";
@@ -50,14 +50,14 @@ export function detectValueType(value: unknown): ValueType {
 }
 
 /**
- * Formatea un valor para mostrar una vista previa
+ * Formats a value into a preview string
  */
 export function formatValuePreview(value: unknown, type: ValueType): string {
   switch (type) {
     case "string": {
-      // Comillas simples y escapes reales: la salida se lee como un literal
-      // que se puede pegar de vuelta en el código. Antes los saltos de línea
-      // se reemplazaban por "<br>", que se renderizaba tal cual.
+      // Single quotes and real escapes: the output reads as a literal that
+      // can be pasted back into code. Line breaks used to be replaced with
+      // "<br>", which rendered verbatim.
       const raw = value as string;
       const escaped = raw
         .replace(/\\/g, "\\\\")
@@ -84,7 +84,7 @@ export function formatValuePreview(value: unknown, type: ValueType): string {
     case "bigint":
       return `${(value as bigint).toString()}n`;
     case "function":
-      // Usar tipo específico de función y comprobación de tipo
+      // Use a specific function type plus a runtime check
       if (typeof value === "function") {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call
         const funcStr = value.toString();
@@ -124,7 +124,7 @@ export function formatValuePreview(value: unknown, type: ValueType): string {
 }
 
 /**
- * Verifica si un valor tiene hijos (propiedades expandibles)
+ * Checks whether a value has children (expandable properties)
  */
 export function hasChildren(value: unknown, type: ValueType): boolean {
   switch (type) {
@@ -155,7 +155,7 @@ export function hasChildren(value: unknown, type: ValueType): boolean {
 }
 
 /**
- * Cuenta el n��mero de hijos de un valor
+ * Counts how many children a value has
  */
 export function countChildren(value: unknown, type: ValueType): number {
   switch (type) {
@@ -182,7 +182,7 @@ export function countChildren(value: unknown, type: ValueType): number {
 }
 
 /**
- * Procesa objetos anidados para la visualización en consola
+ * Processes nested objects for display in the console
  */
 export function processValue(
   value: unknown,
@@ -191,14 +191,14 @@ export function processValue(
   key?: string | number,
   options: ConsoleFormatterOptions = {}
 ): ProcessedValue {
-  // Opciones con valores por defecto
+  // Options with their defaults
   const {
     maxDepth = 10,
     initialExpandLevel = 1,
     detectCircular = true,
   } = options;
 
-  // Para detectar referencias circulares
+  // To detect circular references
   if (detectCircular && typeof value === "object" && value !== null) {
     if (circularReferences.has(value as object)) {
       return {
@@ -215,23 +215,23 @@ export function processValue(
     circularReferences.set(value as object, path);
   }
 
-  // Detectar tipo del valor
+  // Detect the value's type
   const type = detectValueType(value);
 
-  // Calcular vista previa
+  // Compute the preview
   const preview = formatValuePreview(value, type);
 
-  // Determinar si tiene hijos expandibles
+  // Work out whether it has expandable children
   const valueHasChildren = hasChildren(value, type);
 
-  // Determinar si debe estar expandido inicialmente
+  // Work out whether it should start expanded
   const isExpanded = depth < initialExpandLevel && valueHasChildren;
 
-  // Construir objeto de valor procesado
+  // Build the processed value
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const processedValue: ProcessedValue = {
     type,
-    value: valueHasChildren && depth >= maxDepth ? undefined : value, // Necesitamos permitir any aquí
+    value: valueHasChildren && depth >= maxDepth ? undefined : value, // any has to be allowed here
     preview,
     hasChildren: valueHasChildren,
     depth,
@@ -241,7 +241,7 @@ export function processValue(
     isExpanded,
   };
 
-  // Contar hijos si es necesario
+  // Count children when needed
   if (valueHasChildren) {
     processedValue.childrenCount = countChildren(value, type);
   }
@@ -250,12 +250,12 @@ export function processValue(
 }
 
 /**
- * Tipo para representar entradas de Map
+ * Type representing Map entries
  */
 type MapEntry = [unknown, unknown];
 
 /**
- * Procesa un valor complejo para obtener sus hijos
+ * Processes a complex value to get its children
  */
 export function processChildren(
   parentValue: unknown,
@@ -272,7 +272,7 @@ export function processChildren(
 
   switch (parentType) {
     case "array":
-      // Para arrays, limitar el número de elementos si es muy grande
+      // For arrays, cap the number of items when there are too many
       if (!Array.isArray(parentValue)) return children;
 
       const arrayValue = parentValue as readonly unknown[];
@@ -292,7 +292,7 @@ export function processChildren(
         children.push(child);
       }
 
-      // Si hay más elementos, mostrar un indicador
+      // If more items remain, show an indicator
       if (arrayLength > maxArrayDisplay) {
         children.push({
           type: "string",
@@ -305,7 +305,7 @@ export function processChildren(
       break;
 
     case "object":
-      // Para objetos, obtener las propiedades
+      // For objects, read the properties
       if (parentValue === null || typeof parentValue !== "object")
         return children;
 
@@ -329,7 +329,7 @@ export function processChildren(
         children.push(child);
       }
 
-      // Si hay más propiedades, mostrar un indicador
+      // If more properties remain, show an indicator
       if (keys.length > maxObjectProps) {
         children.push({
           type: "string",
@@ -342,7 +342,7 @@ export function processChildren(
       break;
 
     case "map":
-      // Para Maps, convertir a entradas
+      // For Maps, turn them into entries
       if (!(parentValue instanceof Map)) return children;
 
       const mapValue = parentValue as Map<string | number | symbol, unknown>;
@@ -352,7 +352,7 @@ export function processChildren(
 
       for (let i = 0; i < displayEntries; i++) {
         const [mapKey, mapVal] = mapEntries[i];
-        // Procesar la clave
+        // Process the key
         const keyPath = `${parentPath}.key[${i}]`;
         const keyValue = processValue(
           mapKey,
@@ -362,7 +362,7 @@ export function processChildren(
           options
         );
 
-        // Procesar el valor
+        // Process the value
         const valPath = `${parentPath}.val[${i}]`;
         const valValue = processValue(
           mapVal,
@@ -387,7 +387,7 @@ export function processChildren(
       break;
 
     case "set":
-      // Para Sets, convertir a array
+      // For Sets, turn them into an array
       if (!(parentValue instanceof Set)) return children;
 
       const setValue = parentValue as Set<unknown>;
@@ -409,13 +409,13 @@ export function processChildren(
       break;
 
     case "error":
-      // Para errores, mostrar propiedades y stack
+      // For errors, show properties and the stack
       if (!(parentValue instanceof Error)) return children;
 
       const errorValue = parentValue as Error;
       const errorKeys = Object.keys(errorValue);
 
-      // Añadir el stack trace primero
+      // Add the stack trace first
       if (errorValue.stack) {
         children.push({
           type: "string",
@@ -428,10 +428,10 @@ export function processChildren(
         });
       }
 
-      // Añadir otras propiedades
+      // Add the remaining properties
       for (const key of errorKeys) {
         if (key !== "stack") {
-          // El stack ya lo hemos añadido
+          // The stack was added already
           const childPath = `${parentPath}.${key}`;
           // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
           const childValue = errorValue[key as keyof Error];
@@ -452,13 +452,13 @@ export function processChildren(
 }
 
 /**
- * Procesa múltiples valores para console.log
+ * Processes several values for console.log
  */
 export function processConsoleValues(
   values: unknown[],
   options: ConsoleFormatterOptions = {}
 ): ProcessedValue[] {
-  // En vez de intentar limpiar, crear un nuevo WeakMap para cada invocación
+  // Rather than trying to clear it, build a fresh WeakMap per invocation
   circularReferences = new WeakMap<object, string>();
   valueIdCounter = 0;
 

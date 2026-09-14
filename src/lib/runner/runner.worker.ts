@@ -3,17 +3,17 @@ import type { RunRequest, RunnerEvent } from "./protocol";
 import { serializeArgs } from "./serialize";
 
 /**
- * Worker de ejecución del playground JS/TS.
+ * Execution worker for the JS/TS playground.
  *
- * Recibe JavaScript ya transpilado, lo corre con un `console` inyectado y
- * devuelve cada llamada serializada. El timeout lo impone el cliente
- * (`client.ts`) con `terminate()`: desde acá no hay forma de interrumpir un
- * bucle infinito.
+ * It receives already transpiled JavaScript, runs it with an injected
+ * `console` and returns every call serialized. The timeout is imposed by the
+ * client (`client.ts`) through `terminate()`: from in here there is no way to
+ * interrupt an infinite loop.
  */
 
 /**
- * El tsconfig del proyecto no incluye la lib "webworker" (es una app Next con
- * lib DOM), así que se declara sólo lo que este archivo usa del scope.
+ * The project tsconfig does not include the "webworker" lib (this is a Next
+ * app on lib DOM), so only what this file uses from the scope is declared.
  */
 interface WorkerScope {
   postMessage(message: unknown): void;
@@ -53,7 +53,7 @@ function makeConsole(runId: string) {
     };
   }
 
-  // Alias comunes que de otro modo lanzarían ReferenceError.
+  // Common aliases that would otherwise throw ReferenceError.
   shim.trace = shim.debug;
   shim.dir = shim.log;
   shim.table = shim.log;
@@ -61,11 +61,11 @@ function makeConsole(runId: string) {
   return shim;
 }
 
-/** Stack del código del usuario, sin los frames internos del worker */
+/** The user code's stack, without the worker's internal frames */
 function captureCallerStack(): string | undefined {
   const stack = new Error().stack;
   if (!stack) return undefined;
-  // Las 3 primeras líneas son de este archivo, no del código ejecutado.
+  // The first 3 lines belong to this file, not to the executed code.
   return stack.split("\n").slice(3).join("\n");
 }
 
@@ -73,7 +73,7 @@ async function run({ runId, code }: RunRequest) {
   const startedAt = Date.now();
   const console = makeConsole(runId);
 
-  // El await de nivel superior se habilita envolviendo en una IIFE async.
+  // Top-level await is enabled by wrapping the code in an async IIFE.
   const wrapped = `return (async () => {\n${code}\n})()`;
 
   try {
@@ -101,7 +101,7 @@ ctx.onmessage = (event: MessageEvent<RunRequest>) => {
   }
 };
 
-// Promesas rechazadas sin catch dentro del código del usuario.
+// Promises rejected without a catch inside the user's code.
 ctx.onunhandledrejection = (event: PromiseRejectionEvent) => {
   const reason = event.reason;
   const err = reason instanceof Error ? reason : new Error(String(reason));

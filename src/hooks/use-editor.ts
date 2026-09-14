@@ -16,7 +16,7 @@ import {
 } from "@/lib/runner/compile";
 import type { MonacoEditor } from "@/lib/types";
 
-/** Pausa de tecleo antes de disparar el auto-run */
+/** Typing pause before auto-run fires */
 const AUTORUN_DEBOUNCE_MS = 700;
 
 export function useEditor() {
@@ -38,7 +38,7 @@ export function useEditor() {
 
   const { resolvedTheme } = useTheme();
   const [isExecuting, setIsExecuting] = useState(false);
-  /** Monaco carga por CDN: hasta que monta no hay modelo que compilar */
+  /** Monaco loads from a CDN: until it mounts there is no model to compile */
   const [isEditorReady, setIsEditorReady] = useState(false);
   const [problems, setProblems] = useState<Problem[]>([]);
 
@@ -56,7 +56,7 @@ export function useEditor() {
     setExecutingCode,
   } = useConsole({ initiallyOpen: true });
 
-  // Handlers en refs: el worker vive más que cualquier render.
+  // Handlers in refs: the worker outlives any render.
   const handleRunnerEvent = useRef<(event: RunnerEvent) => void>(() => {});
   handleRunnerEvent.current = (event: RunnerEvent) => {
     switch (event.type) {
@@ -106,10 +106,10 @@ export function useEditor() {
   }, []);
 
   /**
-   * Compila y ejecuta el modelo actual.
+   * Compiles and runs the current model.
    *
-   * @param silent true para el auto-run: con errores simplemente no ejecuta,
-   * en lugar de escribir en la consola en cada tecla.
+   * @param silent true for auto-run: on errors it simply does not run, instead
+   * of writing to the console on every keystroke.
    */
   const execute = useCallback(
     async (silent: boolean) => {
@@ -125,7 +125,7 @@ export function useEditor() {
       try {
         result = await compileModel(monaco, model);
       } catch {
-        // El worker de TS todavía no está listo: el próximo tecleo reintenta.
+        // The TS worker is not ready yet: the next keystroke retries.
         return;
       }
 
@@ -160,15 +160,15 @@ export function useEditor() {
     [addProcessedOutput, clearConsole, getRunner, setExecutingCode]
   );
 
-  // Ref estable para el atajo de teclado, que se registra una sola vez.
+  // Stable ref for the keyboard shortcut, which is registered only once.
   const executeRef = useRef(execute);
   executeRef.current = execute;
 
   const runCode = useCallback(() => executeRef.current(false), []);
 
-  // Auto-run: una ejecución por pausa de tecleo, no una por tecla.
-  // `isEditorReady` en las dependencias es lo que dispara la primera ejecución:
-  // al montar, el debounce vence antes de que exista el modelo.
+  // Auto-run: one execution per typing pause, not one per keystroke.
+  // `isEditorReady` in the dependencies is what triggers the first run: on
+  // mount, the debounce elapses before the model exists.
   useEffect(() => {
     if (!autoRun || !isEditorReady) return;
     const timer = setTimeout(() => {
@@ -215,7 +215,7 @@ export function useEditor() {
   return {
     code,
     config,
-    /** El editor sigue al tema del sitio (el navbar tiene el toggle) */
+    /** The editor follows the site theme (the navbar holds the toggle) */
     editorTheme: (resolvedTheme === "light" ? "light" : "dark") as
       | "light"
       | "dark",

@@ -12,9 +12,9 @@ import type { PlaygroundLanguage } from "@/store/editor-store";
 import type { LayoutOrientation } from "@/lib/types";
 
 /**
- * Barra del playground JS/TS. El marco (marca, altura, bordes) vive en
- * `PlaygroundHeader`, compartido con los demás playgrounds; aquí sólo van los
- * controles propios: lenguaje, auto-run y ejecutar.
+ * Toolbar for the JS/TS playground. The frame (brand, height, borders) lives
+ * in `PlaygroundHeader`, shared with the other playgrounds; only the controls
+ * specific to this screen stay here: language, auto-run and run.
  */
 
 interface EditorHeaderProps {
@@ -79,7 +79,7 @@ export function EditorHeader({
           onCheckedChange={onAutoRunChange}
           aria-label="Run as you type"
         />
-        Run as you type
+        <span className="hidden sm:inline">Run as you type</span>
       </label>
 
       <button

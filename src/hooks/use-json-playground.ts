@@ -7,7 +7,6 @@ import {
   JSONNode,
   buildJSONTree,
   formatJSON,
-  validateJSON,
 } from "@/lib/utils/json-formatter";
 
 // Default JSON example to show on first load
@@ -16,6 +15,7 @@ const DEFAULT_JSON = `{
   "version": "1.0.0",
   "description": "A tool to format and visualize JSON data",
   "features": ["Format", "Validate", "Visualize", "Copy", "Download"],
+  "tags": [],
   "settings": {
     "theme": "dark",
     "autoFormat": true,
@@ -113,27 +113,25 @@ export function useJsonPlayground(options?: UseJsonPlaygroundOptions) {
     });
   };
 
-  // Parse JSON and generate tree
+  // Parse JSON and generate tree. A single `JSON.parse`: validating and
+  // parsing separately walked the text twice on every keystroke.
   const parseJson = (): void => {
-    const validation = validateJSON(jsonInput);
+    let parsed: unknown;
 
-    if (!validation.valid) {
-      setJsonError(validation.error);
+    try {
+      parsed = JSON.parse(jsonInput);
+    } catch (error) {
+      setJsonError(error instanceof Error ? error.message : "Invalid JSON");
       setJsonTree([]);
       return;
     }
 
     setJsonError(null);
-    const obj = JSON.parse(jsonInput);
-    const tree = buildJSONTree(obj);
+    const tree = buildJSONTree(parsed as never);
     setJsonTree(tree);
 
-    // Expand first level by default
-    const newExpandedPaths = new Set<string>();
-    tree.forEach((node) => {
-      newExpandedPaths.add(node.path);
-    });
-    setExpandedPaths(newExpandedPaths);
+    // The first level starts expanded.
+    setExpandedPaths(new Set(tree.map((node) => node.path)));
   };
 
   // Toggle a tree node expanded/collapsed
@@ -162,9 +160,9 @@ export function useJsonPlayground(options?: UseJsonPlaygroundOptions) {
   };
 
   /**
-   * Los temas del editor son los compartidos (`defineThemes`), aplicados por
-   * la prop `theme`: este playground definía su propio `json-dark` fijo y lo
-   * forzaba con `setTheme`, que además ignoraba el modo claro del sitio.
+   * Editor themes are the shared ones (`defineThemes`), applied through the
+   * `theme` prop: this playground used to define its own fixed `json-dark` and
+   * force it with `setTheme`, which also ignored the site's light mode.
    */
   const editorWillMount = (monaco: Monaco) => {
     monaco.languages.json.jsonDefaults.setDiagnosticsOptions({

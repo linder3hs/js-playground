@@ -1,5 +1,5 @@
 /**
- * Tipos de valores posibles en JSON
+ * Value types JSON can hold
  */
 export type JSONValue =
   | string
@@ -10,7 +10,7 @@ export type JSONValue =
   | JSONValue[];
 
 /**
- * Tipos posibles de nodos JSON
+ * Node types in the JSON tree
  */
 export type JSONNodeType =
   | "string"
@@ -24,13 +24,15 @@ export type JSONNodeType =
  * Interface for a node in the JSON tree structure
  */
 export interface JSONNode {
+  /** Key on the parent; empty string at the root when the JSON is a scalar */
   key: string;
   value: JSONValue;
   type: JSONNodeType;
   depth: number;
-  expanded: boolean;
+  /** JSON Pointer (RFC 6901): identifies the node unambiguously */
   path: string;
-  children?: JSONNode[];
+  /** Entries in the container; undefined for scalars */
+  size?: number;
 }
 
 /**
@@ -66,32 +68,9 @@ export function formatJSON(
 }
 
 /**
- * Validate a JSON string
- * @param jsonString - The JSON string to validate
- * @returns Object with validation result
- */
-export function validateJSON(jsonString: string): {
-  valid: boolean;
-  error: string | null;
-} {
-  try {
-    JSON.parse(jsonString);
-    return {
-      valid: true,
-      error: null,
-    };
-  } catch (error) {
-    return {
-      valid: false,
-      error: error instanceof Error ? error.message : "Invalid JSON",
-    };
-  }
-}
-
-/**
- * Determina el tipo de un valor JSON
- * @param value - El valor a comprobar
- * @returns El tipo del valor como JSONNodeType
+ * Determine the type of a JSON value
+ * @param value - The value to check
+ * @returns The value's type as a JSONNodeType
  */
 function getJSONType(value: JSONValue): JSONNodeType {
   if (value === null) return "null";
@@ -100,40 +79,49 @@ function getJSONType(value: JSONValue): JSONNodeType {
 }
 
 /**
- * Convert a JSON object to a tree structure for display
- * @param obj - The JSON object to convert
- * @param parent - Parent path (for nested objects)
- * @param depth - Current depth level in the tree
- * @returns Array of JSONNode objects representing the tree
+ * Escapes a JSON Pointer segment (RFC 6901). The tree used to build
+ * `parent.key`, so `{"a.b": 1}` and `{"a": {"b": 2}}` shared a path and
+ * expanding one expanded the other.
+ */
+function pointerSegment(key: string): string {
+  return key.replace(/~/g, "~0").replace(/\//g, "~1");
+}
+
+/**
+ * Builds **a single level** of the tree. Children are requested on expand, so
+ * opening a large JSON no longer materializes every node on each keystroke;
+ * you only pay for what you look at.
  */
 export function buildJSONTree(
-  obj: JSONValue,
+  value: JSONValue,
   parent: string = "",
   depth: number = 0
 ): JSONNode[] {
-  // Si no es un objeto o array, o es null, devolver array vacío
-  if (obj === null || typeof obj !== "object") return [];
+  // A valid JSON can be a scalar: `42`, `"hi"`, `true`. That used to return an
+  // empty tree, and the view claimed there was nothing to show.
+  if (value === null || typeof value !== "object") {
+    return depth === 0
+      ? [{ key: "", value, type: getJSONType(value), depth, path: "" }]
+      : [];
+  }
 
-  return Object.keys(obj as object).map((key) => {
-    const value = (obj as { [key: string]: JSONValue })[key];
-    const path = parent ? `${parent}.${key}` : key;
-    const type = getJSONType(value);
-    const isObject = value !== null && typeof value === "object";
+  const entries = value as { [key: string]: JSONValue };
 
-    const node: JSONNode = {
+  return Object.keys(entries).map((key) => {
+    const child = entries[key];
+    const type = getJSONType(child);
+    const isContainer = child !== null && typeof child === "object";
+
+    return {
       key,
-      value: isObject ? null : value,
+      value: child,
       type,
       depth,
-      expanded: false,
-      path,
+      path: `${parent}/${pointerSegment(key)}`,
+      // Empty containers keep `size: 0`: the view painted them as a red
+      // `null` because it could not tell "no children" from "scalar".
+      size: isContainer ? Object.keys(child as object).length : undefined,
     };
-
-    if (isObject) {
-      node.children = buildJSONTree(value, path, depth + 1);
-    }
-
-    return node;
   });
 }
 

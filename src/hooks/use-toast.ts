@@ -3,11 +3,11 @@
 import * as React from "react";
 import type { ToastActionElement, ToastProps } from "@/components/ui/toast";
 
-// Constantes
+// Constants
 const TOAST_LIMIT = 1;
 const TOAST_REMOVE_DELAY = 10000;
 
-// Tipos
+// Types
 type ToasterToast = ToastProps & {
   id: string;
   title?: React.ReactNode;
@@ -21,14 +21,14 @@ type State = {
   toasts: ToasterToast[];
 };
 
-// Acciones tipadas
+// Typed actions
 type Action =
   | { type: "ADD_TOAST"; toast: ToasterToast }
   | { type: "UPDATE_TOAST"; toast: Partial<ToasterToast> }
   | { type: "DISMISS_TOAST"; toastId?: string }
   | { type: "REMOVE_TOAST"; toastId?: string };
 
-// Generador de IDs
+// Id generator
 const createToastId = (() => {
   let count = 0;
   return () => {
@@ -37,10 +37,10 @@ const createToastId = (() => {
   };
 })();
 
-// Map para timeouts
+// Timeout map
 const toastTimeouts = new Map<string, NodeJS.Timeout>();
 
-// Función para cola de eliminación
+// Removal queue
 const addToRemoveQueue = (
   toastId: string,
   dispatch: (action: Action) => void
@@ -115,7 +115,7 @@ const reducer = (state: State, action: Action): State => {
   }
 };
 
-// Estado global y listeners
+// Global state and listeners
 const listeners = new Set<(state: State) => void>();
 let memoryState: State = { toasts: [] };
 
@@ -127,7 +127,7 @@ function dispatch(action: Action): void {
   });
 }
 
-// Función toast
+// toast function
 function toast(props: Toast) {
   const id = createToastId();
 
@@ -159,7 +159,7 @@ function toast(props: Toast) {
   };
 }
 
-// Hook useToast
+// useToast hook
 export function useToast() {
   const [state, setState] = React.useState<State>(memoryState);
 

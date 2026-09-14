@@ -1,7 +1,7 @@
-// Definir un tipo más específico para funciones
+// A more specific type for functions
 export type ConsoleFunction = (...args: unknown[]) => unknown;
 
-// Definir un tipo para valores que pueden ser procesados por la consola
+// Values the console knows how to process
 export type ConsoleValue =
   | string
   | number
@@ -10,17 +10,17 @@ export type ConsoleValue =
   | symbol
   | null
   | undefined
-  | ConsoleFunction // Reemplazamos Function con un tipo específico
+  | ConsoleFunction // A specific type instead of Function
   | Date
   | RegExp
   | Error
   | Promise<unknown>
   | Map<unknown, unknown>
   | Set<unknown>
-  | readonly unknown[] // Más específico que Array<unknown>
+  | readonly unknown[] // More specific than Array<unknown>
   | Record<string, unknown>
   | object;
-// Eliminamos "unknown" que causa el error no-explicit-any
+// Drop "unknown", which trips the no-explicit-any rule
 
 export type ConsoleOutputType = "log" | "error" | "warn" | "info" | "debug";
 
@@ -45,10 +45,10 @@ export type ValueType =
 
 export interface ProcessedValue {
   type: ValueType;
-  // Usamos unknown aquí porque realmente podría ser cualquier valor
-  // y agregamos un comentario para deshabilitar la regla de eslint
+  // This really can be any value, so the eslint rule is disabled right
+  // here instead of widening the type elsewhere
   /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-  value: any; // No podemos evitar any aquí, pero lo explicitamos con el comentario
+  value: any; // any is unavoidable here, so it is spelled out on purpose
   preview?: string;
   hasChildren?: boolean;
   childrenCount?: number;
@@ -58,9 +58,9 @@ export interface ProcessedValue {
   id?: string;
   isExpanded?: boolean;
   /**
-   * Hijos ya serializados. El runner corre en un Web Worker: del lado de la
-   * página no existe el objeto original, así que el árbol viaja completo en
-   * lugar de calcularse al expandir.
+   * Already serialized children. The runner lives in a Web Worker: the page
+   * side never sees the original object, so the whole tree travels up front
+   * instead of being computed on expand.
    */
   children?: ProcessedValue[];
 }
@@ -70,9 +70,9 @@ export interface ConsoleOutput {
   type: ConsoleOutputType;
   timestamp: number;
   values: ProcessedValue[];
-  // También necesitamos deshabilitar la regla aquí
+  // The rule has to be disabled here too
   /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-  rawValues: any[]; // No podemos evitar any[] aquí
+  rawValues: any[]; // any[] is unavoidable here
   stack?: string;
 }
 

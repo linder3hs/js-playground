@@ -28,9 +28,9 @@ import { JsonTreeView } from "@/components/json/JsonTreeView";
 import { useJsonPlayground } from "@/hooks/use-json-playground";
 
 /**
- * Misma anatomía que JS/TS y Markdown: barra de 44px, editor y panel hermano
- * en un `ResizablePanelGroup`, paleta zinc y naranja sólo en hover. El panel
- * hermano acá es el árbol del JSON.
+ * Same anatomy as JS/TS and Markdown: a 44px bar, editor and sibling panel in
+ * a `ResizablePanelGroup`, zinc palette and orange only on hover. Here the
+ * sibling panel is the JSON tree.
  */
 export function JsonPlayground() {
   const {
@@ -63,20 +63,14 @@ export function JsonPlayground() {
         isFullscreen ? "fixed inset-0 z-50 h-screen" : "h-screen"
       }`}
     >
-      <PlaygroundHeader
-        left={
-          <span className="rounded-md border border-zinc-200 px-2.5 py-1 text-xs font-medium text-zinc-500 dark:border-zinc-800">
-            JSON
-          </span>
-        }
-      >
+      <PlaygroundHeader>
         <label className="flex cursor-pointer items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
           <Switch
             checked={autoUpdate}
             onCheckedChange={setAutoUpdate}
             aria-label="Parse as you type"
           />
-          Parse as you type
+          <span className="hidden sm:inline">Parse as you type</span>
         </label>
 
         <button

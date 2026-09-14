@@ -1,7 +1,7 @@
 import { MarkdownPlayground } from "@/markdown-playground";
 
-// El playground ya ocupa la pantalla completa; envolverlo sumaba una franja
-// muerta al pie, igual que pasaba en JS/TS.
+// The playground already fills the viewport; wrapping it added a dead strip
+// at the bottom, the same way it did in JS/TS.
 export default function MarkdownPage() {
   return <MarkdownPlayground />;
 }

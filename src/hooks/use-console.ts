@@ -7,7 +7,7 @@ import {
 } from "@/components/console/types";
 import { processConsoleValues } from "@/lib/utils/console-formatter";
 
-// Definición de tipo para valores que la consola puede manejar
+// Values the console knows how to handle
 export type ConsoleValue =
   | string
   | number
@@ -27,7 +27,7 @@ export type ConsoleValue =
   | Record<string, unknown>
   | object;
 
-// Generar ID único para mensajes de consola
+// Unique id for console messages
 const generateId = (): string =>
   `console_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
@@ -44,7 +44,7 @@ export function useConsole(options: UseConsoleOptions = {}) {
     initiallyOpen = true,
   } = options;
 
-  // Ref para controlar si el componente sigue montado
+  // Ref tracking whether the component is still mounted
   const isMounted = useRef(true);
 
   const [state, setState] = useState<ConsoleState>({
@@ -55,7 +55,7 @@ export function useConsole(options: UseConsoleOptions = {}) {
     executingCode: false,
   });
 
-  // Limpiar la consola
+  // Clear the console
   const clearConsole = useCallback(() => {
     if (!isMounted.current) return;
 
@@ -66,7 +66,7 @@ export function useConsole(options: UseConsoleOptions = {}) {
     }));
   }, []);
 
-  // Añadir un mensaje a la consola con manejo de errores
+  // Append a message to the console, guarding against failures
   const addOutput = useCallback(
     (type: ConsoleOutputType, args: ConsoleValue[], stack?: string) => {
       if (!isMounted.current) return;
@@ -75,13 +75,13 @@ export function useConsole(options: UseConsoleOptions = {}) {
         try {
           const id = generateId();
 
-          // Validar que args es un array (por seguridad)
+          // Make sure args is an array
           const safeArgs = Array.isArray(args) ? args : [args];
 
-          // Procesar valores para que sean renderizables
+          // Turn the values into something renderable
           let processedValues: ProcessedValue[];
           try {
-            // Usamos type assertion para resolver la incompatibilidad de tipos
+            // A type assertion bridges the mismatched types
             processedValues = processConsoleValues(safeArgs as never[], {
               maxDepth: 5,
               initialExpandLevel: 1,
@@ -90,7 +90,7 @@ export function useConsole(options: UseConsoleOptions = {}) {
               detectCircular: true,
             });
           } catch (err) {
-            // Si falla el procesamiento, mostrar error simple
+            // If processing fails, show a plain error
             console.error(
               "Error processing console values:",
               err instanceof Error ? err.message : "Unknown error"
@@ -107,7 +107,7 @@ export function useConsole(options: UseConsoleOptions = {}) {
             ];
           }
 
-          // Crear nuevo objeto de salida
+          // Build the new output entry
           const newOutput: ConsoleOutput = {
             id,
             type,
@@ -117,7 +117,7 @@ export function useConsole(options: UseConsoleOptions = {}) {
             stack,
           };
 
-          // Añadir a la lista, limitando el número total
+          // Append to the list, capping the total
           const newOutputs = [newOutput, ...prev.outputs].slice(0, maxOutputs);
 
           return {
@@ -129,7 +129,7 @@ export function useConsole(options: UseConsoleOptions = {}) {
             "Error adding console output:",
             error instanceof Error ? error.message : "Unknown error"
           );
-          // En caso de error, devolver el estado anterior sin cambios
+          // On error, return the previous state untouched
           return prev;
         }
       });
@@ -138,9 +138,9 @@ export function useConsole(options: UseConsoleOptions = {}) {
   );
 
   /**
-   * Añade una entrada cuyos valores ya vienen serializados desde el worker de
-   * ejecución. `addOutput` sigue existiendo para valores vivos del hilo
-   * principal (errores del propio runner).
+   * Appends an entry whose values arrive already serialized from the
+   * execution worker. `addOutput` still exists for live values from the main
+   * thread (errors raised by the runner itself).
    */
   const addProcessedOutput = useCallback(
     (type: ConsoleOutputType, values: ProcessedValue[], stack?: string) => {
@@ -165,7 +165,7 @@ export function useConsole(options: UseConsoleOptions = {}) {
     [maxOutputs]
   );
 
-  // Cambiar el filtro de la consola
+  // Change the console filter
   const setFilter = useCallback((filter: ConsoleOutputType | "all") => {
     if (!isMounted.current) return;
 
@@ -175,7 +175,7 @@ export function useConsole(options: UseConsoleOptions = {}) {
     }));
   }, []);
 
-  // Alternar la apertura/cierre de la consola
+  // Open or close the console
   const toggleConsole = useCallback(() => {
     if (!isMounted.current) return;
 
@@ -185,7 +185,7 @@ export function useConsole(options: UseConsoleOptions = {}) {
     }));
   }, []);
 
-  // Establecer el mensaje seleccionado
+  // Set the selected message
   const selectOutput = useCallback((id: string | null) => {
     if (!isMounted.current) return;
 
@@ -195,7 +195,7 @@ export function useConsole(options: UseConsoleOptions = {}) {
     }));
   }, []);
 
-  // Establecer el estado de ejecución de código
+  // Set the code execution state
   const setExecutingCode = useCallback((executing: boolean) => {
     if (!isMounted.current) return;
 
@@ -205,7 +205,7 @@ export function useConsole(options: UseConsoleOptions = {}) {
     }));
   }, []);
 
-  // Obtener los mensajes filtrados
+  // Get the filtered messages
   const getFilteredOutputs = useCallback(() => {
     if (state.filter === "all") {
       return state.outputs;
@@ -214,7 +214,7 @@ export function useConsole(options: UseConsoleOptions = {}) {
     return state.outputs.filter((output) => output.type === state.filter);
   }, [state.outputs, state.filter]);
 
-  // Limpiar referencias cuando el componente se desmonta
+  // Drop references when the component unmounts
   useEffect(() => {
     return () => {
       isMounted.current = false;

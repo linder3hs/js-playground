@@ -11,7 +11,7 @@ import {
 
 export type PlaygroundLanguage = "javascript" | "typescript";
 
-/** El lenguaje se deriva de la extensión del archivo activo */
+/** The language is derived from the active file's extension */
 export const FILE_BY_LANGUAGE: Record<PlaygroundLanguage, string> = {
   javascript: "index.js",
   typescript: "index.ts",
@@ -20,7 +20,7 @@ export const FILE_BY_LANGUAGE: Record<PlaygroundLanguage, string> = {
 interface EditorStore extends WorkspaceState {
   config: EditorConfig;
   output: ConsoleOutput[];
-  /** Ejecutar solo al dejar de escribir, sin tocar Run */
+  /** Run on idle after typing, without pressing Run */
   autoRun: boolean;
   setAutoRun: (autoRun: boolean) => void;
   setLanguage: (language: PlaygroundLanguage) => void;
@@ -90,8 +90,8 @@ export const useEditorStore = create<EditorStore>()(
     }),
     {
       name: "js-playground-storage",
-      // Sin esto, un storage viejo (sólo index.js) dejaría el modo TypeScript
-      // sin archivo al cargar.
+      // Without this, an old storage payload (index.js only) would leave
+      // TypeScript mode with no file on load.
       merge: (persisted, current) => {
         const saved = (persisted ?? {}) as Partial<EditorStore>;
         return {

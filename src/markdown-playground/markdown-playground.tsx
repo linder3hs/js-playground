@@ -26,9 +26,9 @@ import { THEMES, defineThemes } from "@/components/editor/monaco-editor";
 import { useMarkdownPlayground } from "@/hooks/use-markdown-playground";
 
 /**
- * Misma anatomía que el playground JS/TS: barra de 44px arriba, editor y panel
- * hermano en un `ResizablePanelGroup`, paleta zinc y acento naranja sólo en
- * hover. Aquí el panel hermano es la vista previa en vez de la consola.
+ * Same anatomy as the JS/TS playground: a 44px bar on top, editor and sibling
+ * panel in a `ResizablePanelGroup`, zinc palette and the orange accent only on
+ * hover. Here the sibling panel is the preview instead of the console.
  */
 export function MarkdownPlayground() {
   const {
@@ -54,20 +54,14 @@ export function MarkdownPlayground() {
         isFullscreen ? "fixed inset-0 z-50 h-screen" : "h-screen"
       }`}
     >
-      <PlaygroundHeader
-        left={
-          <span className="rounded-md border border-zinc-200 px-2.5 py-1 text-xs font-medium text-zinc-500 dark:border-zinc-800">
-            Markdown
-          </span>
-        }
-      >
+      <PlaygroundHeader>
         <label className="flex cursor-pointer items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
           <Switch
             checked={autoUpdate}
             onCheckedChange={setAutoUpdate}
             aria-label="Preview as you type"
           />
-          Preview as you type
+          <span className="hidden sm:inline">Preview as you type</span>
         </label>
 
         <button
@@ -189,9 +183,9 @@ export function MarkdownPlayground() {
         </ResizablePanel>
       </ResizablePanelGroup>
 
-      {/* La vista previa es HTML inyectado, no JSX: sus estilos no pueden ser
-          clases de Tailwind. Los colores salen de la misma paleta zinc que el
-          resto del playground, con un juego por tema. */}
+      {/* The preview is injected HTML, not JSX: its styles cannot be Tailwind
+          classes. The colors come from the same zinc palette as the rest of
+          the playground, with one set per theme. */}
       <style jsx global>{`
         .markdown-preview {
           --md-text: #27272a;
@@ -329,8 +323,8 @@ export function MarkdownPlayground() {
           font-size: 0.875rem;
         }
 
-        /* marked marca la alineación de GFM con el atributo align, y un
-           text-align plano lo pisaba. */
+        /* marked marks GFM alignment with the align attribute, and a plain
+           text-align was overriding it. */
         .markdown-preview th,
         .markdown-preview td {
           border: 1px solid var(--md-border);
@@ -348,7 +342,7 @@ export function MarkdownPlayground() {
           font-weight: 600;
         }
 
-        /* Task lists de GFM: marked emite el checkbox dentro del <li>. */
+        /* GFM task lists: marked emits the checkbox inside the <li>. */
         .markdown-preview li:has(> input[type="checkbox"]) {
           list-style: none;
           margin-left: -1.15rem;
@@ -364,7 +358,7 @@ export function MarkdownPlayground() {
           color: var(--md-muted);
         }
 
-        /* Prism, con la misma paleta que el editor. */
+        /* Prism, on the same palette as the editor. */
         .markdown-preview .token.comment,
         .markdown-preview .token.punctuation {
           color: var(--md-muted);

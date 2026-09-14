@@ -1,7 +1,7 @@
 import { JsonPlayground } from "@/json-playground";
 
-// El playground ya ocupa la pantalla completa; el wrapper sólo sumaba una
-// franja muerta al pie.
+// The playground already fills the viewport; the wrapper only added a dead
+// strip at the bottom.
 export default function JsonPlaygroundPage() {
   return <JsonPlayground />;
 }

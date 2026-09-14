@@ -1,17 +1,17 @@
 import type { Monaco, OnMount } from "@monaco-editor/react";
 
 /**
- * Puente con el TS worker que Monaco ya trae cargado.
+ * Bridge to the TS worker Monaco already has loaded.
  *
- * De acá salen las tres cosas que pidió el runner nuevo: el JavaScript
- * transpilado, los errores de sintaxis y —gratis, por usar el worker real—
- * el autocompletado del lenguaje.
+ * It provides the three things the new runner needed: the transpiled
+ * JavaScript, the syntax errors and — for free, by using the real worker —
+ * language autocomplete.
  */
 
 /**
- * `monaco-editor` no está instalado como paquete (el loader lo trae por CDN),
- * así que el tipo del modelo se deriva del editor, igual que `MonacoEditor`
- * en `lib/types`.
+ * `monaco-editor` is not installed as a package (the loader pulls it from a
+ * CDN), so the model type is derived from the editor, the same way
+ * `MonacoEditor` is in `lib/types`.
  */
 export type TextModel = NonNullable<
   ReturnType<Parameters<OnMount>[0]["getModel"]>
@@ -21,18 +21,18 @@ export interface Problem {
   message: string;
   line: number;
   column: number;
-  /** true = error de sintaxis; false = error de tipos */
+  /** true = syntax error; false = type error */
   syntactic: boolean;
 }
 
 export interface CompileResult {
   js: string;
   problems: Problem[];
-  /** Errores que impiden ejecutar */
+  /** Errors that block execution */
   blocking: Problem[];
 }
 
-/** Mínimo que necesitamos del TypeScriptWorker de Monaco */
+/** The minimum we need from Monaco's TypeScriptWorker */
 interface TsWorker {
   getSyntacticDiagnostics(fileName: string): Promise<TsDiagnostic[]>;
   getSemanticDiagnostics(fileName: string): Promise<TsDiagnostic[]>;
@@ -72,10 +72,10 @@ function toProblem(
 }
 
 /**
- * Transpila el modelo y recoge sus diagnósticos.
+ * Transpiles the model and collects its diagnostics.
  *
- * En TypeScript los errores de tipo también bloquean la ejecución: código que
- * no typechequea es código roto. En JavaScript sólo bloquea la sintaxis.
+ * In TypeScript, type errors block execution too: code that does not
+ * typecheck is broken code. In JavaScript only syntax blocks.
  */
 export async function compileModel(
   monaco: Monaco,
@@ -102,9 +102,9 @@ export async function compileModel(
 
   const blocking = problems.filter((p) => p.syntactic || isTypeScript);
 
-  // El worker de JavaScript no emite nada (getEmitOutput devuelve una lista
-  // vacía) y tampoco hace falta: el código ya es ejecutable tal cual. Sólo
-  // TypeScript necesita pasar por el transpilador.
+  // The JavaScript worker emits nothing (getEmitOutput returns an empty
+  // list), and it does not need to: the code already runs as written. Only
+  // TypeScript has to go through the transpiler.
   let js = "";
   if (syntactic.length === 0) {
     if (isTypeScript) {
@@ -119,27 +119,28 @@ export async function compileModel(
 }
 
 /**
- * Configura el lenguaje una sola vez, al montar el editor.
+ * Configures the language once, when the editor mounts.
  *
- * Clave: acá NO se registra ningún `addExtraLib` con una `interface Console`
- * propia. Hacerlo pisaba la definición de `lib.dom` y era la causa de que el
- * autocompletado de `console` no ofreciera `table`, `dir`, `time`, etc.
+ * Key detail: no `addExtraLib` with a homegrown `interface Console` is
+ * registered here. Doing that shadowed the `lib.dom` definition and was why
+ * `console` autocomplete never offered `table`, `dir`, `time`, and so on.
  */
 export function configureLanguageDefaults(monaco: Monaco): void {
-  // `lib` tiene que ir explícito: sin él TypeScript lo deriva del `target`, y
-  // con ES2020 faltaban métodos como Array.prototype.at (ES2022) o findLast
-  // (ES2023).
+  // `lib` has to be explicit: without it TypeScript derives it from `target`,
+  // and with ES2020 methods like Array.prototype.at (ES2022) or findLast
+  // (ES2023) were missing.
   //
-  // `webworker` en lugar de `dom` porque es donde el código realmente corre:
-  // trae fetch, setTimeout, structuredClone y console, y no ofrece `document`
-  // ni `window`, que autocompletaban para después fallar en ejecución.
+  // `webworker` instead of `dom` because that is where the code actually runs:
+  // it brings fetch, setTimeout, structuredClone and console, and it does not
+  // offer `document` or `window`, which used to autocomplete and then fail at
+  // runtime.
   const compilerOptions = {
     target: monaco.languages.typescript.ScriptTarget.ESNext,
     lib: ["esnext", "webworker"],
     module: monaco.languages.typescript.ModuleKind.ESNext,
     moduleResolution: monaco.languages.typescript.ModuleResolutionKind.NodeJs,
     allowNonTsExtensions: true,
-    // getEmitOutput() no devuelve nada con noEmit activado.
+    // getEmitOutput() returns nothing while noEmit is on.
     noEmit: false,
   };
 

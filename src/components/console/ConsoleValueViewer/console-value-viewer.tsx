@@ -5,17 +5,17 @@ import type { ProcessedValue, ValueType } from "../types";
 import { cn } from "@/lib/utils";
 
 /**
- * Imprime un valor como literal, expandido por defecto.
+ * Prints a value as a literal, expanded by default.
  *
- * Antes todo llegaba colapsado detrás de un chevron: ver un array de tres
- * números costaba un clic. Acá el valor se muestra entero; colapsar es la
- * acción rara, y vive en el corchete de apertura.
+ * Everything used to arrive collapsed behind a chevron: seeing an array of
+ * three numbers cost a click. Here the value shows in full; collapsing is the
+ * rare action, and it lives on the opening bracket.
  *
- * Si la representación entra en una línea, va en una línea. Si no, se abre en
- * bloque con sangría, como haría un formateador.
+ * If the representation fits on one line, it stays on one line. Otherwise it
+ * opens as an indented block, the way a formatter would print it.
  */
 
-/** Ancho a partir del cual el valor se abre en varias líneas */
+/** Width past which the value breaks across several lines */
 const MAX_INLINE = 72;
 
 const COLORS: Record<ValueType, string> = {
@@ -40,7 +40,7 @@ const COLORS: Record<ValueType, string> = {
 
 const punctuation = "text-zinc-400 dark:text-zinc-600";
 
-/** Delimitadores y prefijo por tipo: Map(2) { … }, Set(3) [ … ] */
+/** Delimiters and prefix per type: Map(2) { … }, Set(3) [ … ] */
 function brackets(node: ProcessedValue): [string, string, string] {
   switch (node.type) {
     case "array":
@@ -50,7 +50,7 @@ function brackets(node: ProcessedValue): [string, string, string] {
     case "map":
       return [`Map(${node.childrenCount ?? 0}) `, "{", "}"];
     default: {
-      // `Foo {}` viene del preview cuando el objeto tiene constructor propio.
+      // `Foo {}` comes from the preview when the object has its own constructor.
       const named = node.preview?.endsWith(" {}")
         ? node.preview.slice(0, -2)
         : "";
@@ -69,7 +69,7 @@ function formatKey(node: ProcessedValue, parentType: ValueType): string | null {
   return IDENTIFIER.test(key) ? `${key}: ` : `'${key}': `;
 }
 
-/** Largo que ocuparía el valor en una sola línea */
+/** Length the value would take on a single line */
 function measure(node: ProcessedValue): number {
   if (!node.hasChildren || !node.children) return node.preview?.length ?? 4;
 
@@ -97,8 +97,8 @@ function ValueNode({ node, parentType }: ValueNodeProps) {
     <span className="text-zinc-500 dark:text-zinc-400">{keyLabel}</span>
   );
 
-  // Un Error se imprime por su mensaje, no como objeto: su stack y sus
-  // propiedades ya se muestran al seleccionar la entrada.
+  // An Error prints by its message, not as an object: its stack and its
+  // properties already show when the entry is selected.
   if (node.type === "error") {
     return (
       <>
@@ -115,9 +115,9 @@ function ValueNode({ node, parentType }: ValueNodeProps) {
     node.type === "set";
 
   if (!node.hasChildren || !node.children || node.children.length === 0) {
-    // Un contenedor sin hijos serializados se imprime como literal: `[]` si
-    // está vacío, `[…]` si lo cortó el tope de profundidad. Antes caía en el
-    // preview y salía un `Array(0)` que no se puede pegar en el código.
+    // A container with no serialized children prints as a literal: `[]` when
+    // empty, `[…]` when the depth cap cut it. It used to fall through to the
+    // preview and print `Array(0)`, which cannot be pasted back into code.
     if (isContainer) {
       const [prefix, open, close] = brackets(node);
       const empty = !node.childrenCount;

@@ -48,7 +48,7 @@ export const Workspace = () => {
     }
   };
 
-  // Los de tipo bloquean en TypeScript; en JavaScript sólo la sintaxis.
+  // Type errors block in TypeScript; in JavaScript only syntax does.
   const blocking = problems.filter(
     (problem) => problem.syntactic || language === "typescript"
   );
@@ -100,8 +100,8 @@ export const Workspace = () => {
         </ResizablePanel>
       </ResizablePanelGroup>
 
-      {/* Sólo aparece cuando hay algo que decir: el estado de ejecución ya lo
-          comunica el punto naranja en la consola. */}
+      {/* Only shows up when there is something to say: the orange dot in the
+          console already reports execution state. */}
       {firstProblem && (
         <footer className="flex h-6 shrink-0 items-center gap-2 border-t border-zinc-200 px-3 text-[11px] dark:border-zinc-800">
           <span className="truncate text-red-600 dark:text-red-400">

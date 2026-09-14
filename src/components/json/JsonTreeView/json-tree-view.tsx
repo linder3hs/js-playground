@@ -1,8 +1,9 @@
 "use client";
 
 import { ChevronDown, ChevronRight } from "lucide-react";
-import { JSONNode } from "@/lib/utils/json-formatter";
 import {
+  JSONNode,
+  buildJSONTree,
   getValueStyle,
   formatValueForDisplay,
 } from "@/lib/utils/json-formatter";
@@ -25,7 +26,8 @@ export function JsonTreeView({
 }: JsonTreeViewProps) {
   const renderJsonNode = (node: JSONNode): JSX.Element => {
     const isExpanded = expandedPaths.has(node.path);
-    const hasChildren = !!node.children && node.children.length > 0;
+    const isContainer = node.size !== undefined;
+    const hasChildren = !!node.size;
     const valueStyle = getValueStyle(node.value);
 
     return (
@@ -47,18 +49,29 @@ export function JsonTreeView({
               ))}
           </span>
 
-          <span className="text-purple-600 dark:text-purple-400">
-            {JSON.stringify(node.key)}
-          </span>
-          <span className="text-zinc-400 dark:text-zinc-600">:&nbsp;</span>
-
-          {hasChildren ? (
-            <span className="text-zinc-500">
-              {node.type === "array" ? "Array" : "Object"}
-              <span className="ml-1 text-zinc-400 dark:text-zinc-600">
-                ({node.children?.length}
-                {node.children?.length === 1 ? " item" : " items"})
+          {/* The root of a scalar JSON (`42`) has no key to show. */}
+          {node.key !== "" && (
+            <>
+              <span className="text-purple-600 dark:text-purple-400">
+                {JSON.stringify(node.key)}
               </span>
+              <span className="text-zinc-400 dark:text-zinc-600">:&nbsp;</span>
+            </>
+          )}
+
+          {isContainer ? (
+            <span className="text-zinc-500">
+              {node.size === 0
+                ? node.type === "array"
+                  ? "[]"
+                  : "{}"
+                : `${node.type === "array" ? "Array" : "Object"}`}
+              {node.size! > 0 && (
+                <span className="ml-1 text-zinc-400 dark:text-zinc-600">
+                  ({node.size}
+                  {node.size === 1 ? " item" : " items"})
+                </span>
+              )}
             </span>
           ) : (
             <span className={valueStyle}>
@@ -67,14 +80,18 @@ export function JsonTreeView({
           )}
         </div>
 
+        {/* Children are built on expand, not on parse. */}
         {isExpanded &&
-          node.children?.map((child) => renderJsonNode(child))}
+          hasChildren &&
+          buildJSONTree(node.value, node.path, node.depth + 1).map((child) =>
+            renderJsonNode(child)
+          )}
       </div>
     );
   };
 
-  // El error ya lo muestra la cabecera del panel; acá sólo se explica por qué
-  // el árbol quedó vacío.
+  // The panel header already shows the error; this only explains why the
+  // tree came out empty.
   if (jsonError || jsonTree.length === 0) {
     return (
       <div className="flex-1 px-3 py-2 text-xs text-zinc-500">

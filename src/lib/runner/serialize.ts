@@ -7,18 +7,18 @@ import {
 } from "@/lib/utils/console-formatter";
 
 /**
- * Convierte valores vivos en árboles `ProcessedValue` planos que pueden cruzar
- * el límite del worker por structured clone.
+ * Turns live values into flat `ProcessedValue` trees that can cross the worker
+ * boundary through structured clone.
  *
- * A diferencia de `console-formatter`, los hijos se calculan de una vez
- * (`children`) en lugar de perezosamente: del otro lado del postMessage ya no
- * existe el objeto original para recorrer.
+ * Unlike `console-formatter`, children are computed up front (`children`)
+ * instead of lazily: on the other side of postMessage the original object no
+ * longer exists to walk.
  */
 
 const MAX_DEPTH = 6;
 const MAX_CHILDREN = 100;
 
-/** Valores que structured clone acepta tal cual */
+/** Values structured clone accepts as they are */
 type CloneSafe = string | number | boolean | bigint | null | undefined;
 
 function cloneSafeValue(value: unknown, type: ValueType): CloneSafe {
@@ -31,13 +31,13 @@ function cloneSafeValue(value: unknown, type: ValueType): CloneSafe {
     case "null":
       return null;
     default:
-      // Funciones, símbolos, objetos: el viewer usa `preview` y `children`.
+      // Functions, symbols, objects: the viewer uses `preview` and `children`.
       return undefined;
   }
 }
 
 interface Ctx {
-  /** Ancestros en el camino actual, para detectar ciclos reales */
+  /** Ancestors on the current path, to detect real cycles */
   ancestors: Set<object>;
   nextId: () => string;
 }
@@ -80,14 +80,14 @@ function serializeValue(
     id: ctx.nextId(),
   };
 
-  // El contador va incluso en contenedores vacíos: es lo que le permite al
-  // viewer distinguir `[]` de un array recortado por profundidad.
+  // The count is kept even for empty containers: that is what lets the viewer
+  // tell `[]` apart from an array cut off by the depth cap.
   if (isContainer) node.childrenCount = countChildren(value, type);
 
   if (!expandable) return node;
 
   if (depth >= MAX_DEPTH) {
-    // Más profundo no se serializa. El viewer lo imprime como `[…]`.
+    // Deeper than this is not serialized. The viewer prints it as `[…]`.
     node.hasChildren = false;
     return node;
   }
@@ -103,7 +103,7 @@ function safePreview(value: unknown, type: ValueType): string {
   try {
     return formatValuePreview(value, type);
   } catch {
-    // Getters que lanzan, proxies hostiles, toString roto.
+    // Getters that throw, hostile proxies, a broken toString.
     return `[${type}]`;
   }
 }
@@ -237,7 +237,7 @@ function serializeChildren(
         try {
           childValue = obj[key];
         } catch (error) {
-          // Getter que lanza: se muestra el error en lugar de romper el run.
+          // A throwing getter: the error is shown instead of breaking the run.
           childValue = error;
         }
         children.push(
@@ -269,10 +269,10 @@ function serializeChildren(
 }
 
 /**
- * Serializa los argumentos de una llamada a console.*
+ * Serializes the arguments of a console.* call.
  *
- * @param idPrefix identificador único de la entrada; se usa como raíz de los
- * paths para que expandir un nodo no expanda el mismo path en otra entrada.
+ * @param idPrefix unique identifier for the entry; used as the root of the
+ * paths so expanding a node does not expand the same path in another entry.
  */
 export function serializeArgs(
   args: unknown[],

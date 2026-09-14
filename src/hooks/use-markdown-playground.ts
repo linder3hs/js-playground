@@ -35,23 +35,24 @@ console.log(greet("world"));
 `;
 
 /**
- * El preview usaba un parser a mano de ~90 líneas de regex: metía bloques
- * dentro de `<p>`, duplicaba el cuerpo de los fences, aplicaba `**negrita**`
- * dentro del código y no conocía task lists, strikethrough ni listas
- * anidadas. `marked` trae GFM (tablas, tachado, autolinks, task lists) de
- * fábrica, en una sola dependencia sin deps transitivas.
+ * The preview used a hand-rolled parser of ~90 lines of regex: it nested
+ * block elements inside `<p>`, duplicated the body of fenced code, applied
+ * `**bold**` inside code spans and knew nothing about task lists,
+ * strikethrough or nested lists. `marked` brings GFM (tables, strikethrough,
+ * autolinks, task lists) out of the box, in one dependency with no transitive
+ * deps.
  *
- * GitHub renderiza con cmark-gfm; lo más fiel en JS sería remark-gfm, pero
- * arrastra el stack de unified entero para diferencias que este preview no
- * alcanza a notar.
+ * GitHub renders with cmark-gfm; the most faithful port in JS would be
+ * remark-gfm, but it drags in the whole unified stack for differences this
+ * preview never gets close to noticing.
  */
 const marked = new Marked({
   gfm: true,
   breaks: false,
   renderer: {
-    // Prism ya estaba en el proyecto, pero el resaltado nunca corría: el
-    // parser viejo inyectaba un `<script>` con `Prism.highlightAll()` sobre
-    // una librería que nadie importaba.
+    // Prism was already in the project, but highlighting never ran: the old
+    // parser injected a `<script>` calling `Prism.highlightAll()` against a
+    // library nobody imported.
     code({ text, lang }) {
       const grammar = lang && Prism.languages[lang];
       const body = grammar

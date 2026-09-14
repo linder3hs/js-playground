@@ -12,11 +12,11 @@ interface ConsoleOutputProps {
 }
 
 /**
- * Una entrada de consola.
+ * A console entry.
  *
- * El tipo se comunica una sola vez: antes venía como borde de color, ícono y
- * además la palabra "log"/"warn"/"error", con tres botones propios al lado.
- * Acá el ícono lleva el color, y la hora sólo aparece al pasar el mouse.
+ * The level is stated once: it used to arrive as a colored border, an icon and
+ * the word "log"/"warn"/"error", with three buttons of its own alongside. Here
+ * the icon carries the color, and the timestamp only shows on hover.
  */
 
 const formatTime = (timestamp: number): string => {
@@ -42,8 +42,8 @@ function LevelIcon({ type }: { type: ConsoleOutputType["type"] }) {
     case "debug":
       return <Bug className="h-3.5 w-3.5 text-violet-500" aria-hidden />;
     default:
-      // Un log no necesita ícono: el valor ya trae su propio chevron para
-      // expandir, y dos flechas seguidas se leían como un error de render.
+      // A log needs no icon: the value already carries its own chevron to
+      // expand, and two arrows in a row read like a render bug.
       return (
         <span className="block h-1 w-1 rounded-full bg-zinc-300 dark:bg-zinc-700" />
       );
@@ -67,13 +67,13 @@ export function ConsoleOutput({
         output.type === "warn" && "bg-amber-50/60 dark:bg-amber-950/20"
       )}
     >
-      {/* Altura fija = alto de la primera línea, para centrar cualquier ícono */}
+      {/* Fixed height = first line's height, so any icon centers on it */}
       <span className="flex h-[21px] shrink-0 items-center">
         <LevelIcon type={output.type} />
       </span>
 
       <div className="min-w-0 flex-1 overflow-x-auto">
-        {/* Varios argumentos se imprimen separados por un espacio, como en
+        {/* Several arguments print separated by a space, the same as in
             cualquier consola: console.log("total", 42) -> total 42 */}
         {output.values.map((value, index) => (
           <span key={`${output.id}-${index}`}>

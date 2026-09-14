@@ -3,10 +3,10 @@
 import { ThemeProvider as NextThemesProvider } from "next-themes";
 import { ReactNode } from "react";
 
-// Opciones válidas para attribute según la documentación
+// Valid values for `attribute`, per the next-themes docs
 type Attribute = "class" | "data-theme" | "data-mode";
 
-// Define propiedades específicas con tipos concretos
+// Spell the props out with concrete types
 interface ThemeProviderProps {
   children: ReactNode;
   attribute?: Attribute | Attribute[] | undefined;

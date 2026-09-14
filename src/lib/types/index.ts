@@ -52,7 +52,7 @@ export interface WorkspaceSettings {
 export type ActivePanel = "editor" | "console" | "both";
 
 /**
- * `monaco-editor` no está instalado como paquete (el loader lo trae por CDN),
- * así que el tipo del editor se deriva del handler de montaje.
+ * `monaco-editor` is not installed as a package (the loader pulls it from a
+ * CDN), so the editor type is derived from the mount handler.
  */
 export type MonacoEditor = Parameters<OnMount>[0];

@@ -17,7 +17,7 @@ export default function Home() {
     };
   }, []);
 
-  // Workspace ya ocupa la altura completa; envolverlo en otro min-h-screen
-  // sumaba una franja muerta al pie.
+  // Workspace already fills the viewport; wrapping it in another min-h-screen
+  // added a dead strip at the bottom.
   return <Workspace />;
 }
